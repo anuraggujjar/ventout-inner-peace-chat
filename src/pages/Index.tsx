@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import QuoteCard from '@/components/QuoteCard';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, History as HistoryIcon, Video } from 'lucide-react';
+import { MessageSquare, Video } from 'lucide-react'; // Removed HistoryIcon
 
 const initialQuotes = [
   {
@@ -36,10 +36,7 @@ const Index = () => {
     navigate('/chat');
   };
 
-  const handleGoToHistory = () => {
-    console.log("History button clicked");
-    navigate('/history');
-  };
+  // Removed handleGoToHistory function
 
   return (
     <Layout>
@@ -69,8 +66,7 @@ const Index = () => {
             size="lg" 
             variant="outline"
             className="w-full py-3 text-lg bg-secondary/50 hover:bg-secondary/70 text-secondary-foreground rounded-xl shadow-md border-dashed border-primary/50"
-            disabled // Visually indicate it's not active yet
-            // onClick={() => console.log("Video call clicked - coming soon")} // Optional: log click
+            disabled 
           >
             <Video className="mr-2 h-6 w-6" />
             Video Call
@@ -78,18 +74,7 @@ const Index = () => {
           <p className="text-xs text-muted-foreground mt-[-0.5rem] mb-2">Coming Soon!</p>
         </div>
         
-
-        <div className="w-full max-w-xs space-y-4 mb-8">
-          <Button 
-            variant="outline"
-            size="lg" 
-            className="w-full py-3 text-lg rounded-xl shadow-sm"
-            onClick={handleGoToHistory}
-          >
-            <HistoryIcon className="mr-2 h-6 w-6" />
-            View History
-          </Button>
-        </div>
+        {/* Removed the View History button and its container div */}
       </div>
     </Layout>
   );

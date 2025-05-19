@@ -1,12 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Settings, User, Sun, Moon } from 'lucide-react';
+import { Home, Settings, User, Sun, Moon, History as HistoryIcon } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -14,6 +12,7 @@ interface LayoutProps {
 
 const navItems = [
   { path: '/', label: 'Home', icon: Home },
+  { path: '/history', label: 'History', icon: HistoryIcon },
   { path: '/settings', label: 'Settings', icon: Settings },
 ];
 
@@ -32,7 +31,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   if (!mounted) {
-    // To prevent hydration mismatch with next-themes, often good to return null or a loader
     return (
       <div className="flex flex-col min-h-screen bg-background text-foreground animate-pulse">
         <header className="flex items-center justify-between p-4 border-b border-border h-16">
@@ -69,14 +67,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <Link
               key={item.path}
               to={item.path}
-              className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors duration-200 w-1/3
+              className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors duration-200 w-1/${navItems.length + 1} 
                 ${location.pathname === item.path ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
             >
               <item.icon size={24} strokeWidth={location.pathname === item.path ? 2.5 : 2} />
               <span className="text-xs mt-1">{item.label}</span>
             </Link>
           ))}
-           <div className="flex flex-col items-center justify-center p-2 w-1/3">
+           <div className={`flex flex-col items-center justify-center p-2 w-1/${navItems.length + 1}`}>
              <Label htmlFor="layout-dark-mode-toggle" className="cursor-pointer">
               {theme === 'dark' ? <Moon size={24} className="text-primary" /> : <Sun size={24} className="text-primary" />}
             </Label>
@@ -87,7 +85,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               className="mt-1"
               aria-label="Toggle dark mode"
             />
-            {/* <span className="text-xs mt-1 text-muted-foreground">Mode</span> */}
           </div>
         </div>
       </nav>

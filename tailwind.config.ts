@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -18,18 +19,21 @@ export default {
 			}
 		},
 		extend: {
+      fontFamily: {
+        sans: ['Poppins', 'sans-serif'], // Set Poppins as default sans-serif
+      },
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
-				background: 'hsl(var(--background))',
-				foreground: 'hsl(var(--foreground))',
+				background: 'hsl(var(--background))', // bg-slate-900
+				foreground: 'hsl(var(--foreground))', // text-slate-50
 				primary: {
-					DEFAULT: 'hsl(var(--primary))',
+					DEFAULT: 'hsl(var(--primary))', // e.g., a soft blue or lavender
 					foreground: 'hsl(var(--primary-foreground))'
 				},
 				secondary: {
-					DEFAULT: 'hsl(var(--secondary))',
+					DEFAULT: 'hsl(var(--secondary))', // e.g., a lighter shade for cards
 					foreground: 'hsl(var(--secondary-foreground))'
 				},
 				destructive: {
@@ -41,7 +45,7 @@ export default {
 					foreground: 'hsl(var(--muted-foreground))'
 				},
 				accent: {
-					DEFAULT: 'hsl(var(--accent))',
+					DEFAULT: 'hsl(var(--accent))', // e.g., a soft teal or lavender
 					foreground: 'hsl(var(--accent-foreground))'
 				},
 				popover: {
@@ -49,7 +53,7 @@ export default {
 					foreground: 'hsl(var(--popover-foreground))'
 				},
 				card: {
-					DEFAULT: 'hsl(var(--card))',
+					DEFAULT: 'hsl(var(--card))', // e.g., bg-slate-800
 					foreground: 'hsl(var(--card-foreground))'
 				},
 				sidebar: {

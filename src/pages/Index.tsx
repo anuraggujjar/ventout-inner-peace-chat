@@ -1,10 +1,12 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import QuoteCard from '@/components/QuoteCard';
-import { Button } from '@/components/ui/button'; // Using shadcn button
-import { MessageSquare } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { MessageSquare, Moon, Sun, History as HistoryIcon } from 'lucide-react';
+import { useTheme } from 'next-themes';
 
 const initialQuotes = [
   {
@@ -24,9 +26,14 @@ const initialQuotes = [
 const Index = () => {
   const [currentQuote, setCurrentQuote] = useState(initialQuotes[0]);
   const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleRefreshQuote = () => {
-    // Simple refresh: cycle through quotes. Dynamic refresh later.
     const currentIndex = initialQuotes.findIndex(q => q.quote === currentQuote.quote);
     const nextIndex = (currentIndex + 1) % initialQuotes.length;
     setCurrentQuote(initialQuotes[nextIndex]);
@@ -35,8 +42,17 @@ const Index = () => {
 
   const handleStartTalking = () => {
     console.log("Start Talking clicked");
-    navigate('/chat'); // Navigate to placeholder chat page
+    navigate('/chat');
   };
+
+  const handleGoToHistory = () => {
+    console.log("History button clicked");
+    navigate('/history');
+  };
+
+  if (!mounted) {
+    return null;
+  }
 
   return (
     <Layout>
@@ -53,13 +69,38 @@ const Index = () => {
 
         <Button 
           size="lg" 
-          className="w-full max-w-xs py-3 text-lg bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl shadow-md animate-pulse"
+          className="w-full max-w-xs py-3 text-lg bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl shadow-md animate-pulse mb-6"
           onClick={handleStartTalking}
         >
           <MessageSquare className="mr-2 h-6 w-6" />
           Start Talking
         </Button>
-        <p className="text-xs text-muted-foreground mt-4">Connect anonymously with a listener.</p>
+        <p className="text-xs text-muted-foreground mt-[-1rem] mb-6">Connect anonymously with a listener.</p>
+
+        <div className="w-full max-w-xs space-y-4 mb-8">
+          <Button 
+            variant="outline"
+            size="lg" 
+            className="w-full py-3 text-lg rounded-xl shadow-sm"
+            onClick={handleGoToHistory}
+          >
+            <HistoryIcon className="mr-2 h-6 w-6" />
+            View History
+          </Button>
+
+          <div className="flex items-center justify-between p-3 bg-card rounded-xl shadow-sm border">
+            <Label htmlFor="dark-mode-toggle" className="flex items-center text-foreground">
+              {theme === 'dark' ? <Moon className="mr-2 h-5 w-5 text-primary" /> : <Sun className="mr-2 h-5 w-5 text-primary" />}
+              Dark Mode
+            </Label>
+            <Switch
+              id="dark-mode-toggle"
+              checked={theme === 'dark'}
+              onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+              aria-label="Toggle dark mode"
+            />
+          </div>
+        </div>
       </div>
     </Layout>
   );

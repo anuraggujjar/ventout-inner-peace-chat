@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import QuoteCard from '@/components/QuoteCard';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, History as HistoryIcon } from 'lucide-react';
+import { MessageSquare, History as HistoryIcon, Video } from 'lucide-react';
 
 const initialQuotes = [
   {
@@ -54,15 +54,30 @@ const Index = () => {
           onRefresh={handleRefreshQuote}
         />
 
-        <Button 
-          size="lg" 
-          className="w-full max-w-xs py-3 text-lg bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl shadow-md animate-pulse mb-6"
-          onClick={handleStartTalking}
-        >
-          <MessageSquare className="mr-2 h-6 w-6" />
-          Start Talking
-        </Button>
-        <p className="text-xs text-muted-foreground mt-[-1rem] mb-6">Connect anonymously with a listener.</p>
+        <div className="w-full max-w-xs space-y-4 mb-6">
+          <Button 
+            size="lg" 
+            className="w-full py-3 text-lg bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl shadow-md animate-pulse"
+            onClick={handleStartTalking}
+          >
+            <MessageSquare className="mr-2 h-6 w-6" />
+            Start Talking
+          </Button>
+          <p className="text-xs text-muted-foreground mt-[-0.5rem] mb-2">Connect anonymously with a listener.</p>
+
+          <Button 
+            size="lg" 
+            variant="outline"
+            className="w-full py-3 text-lg bg-secondary/50 hover:bg-secondary/70 text-secondary-foreground rounded-xl shadow-md border-dashed border-primary/50"
+            disabled // Visually indicate it's not active yet
+            // onClick={() => console.log("Video call clicked - coming soon")} // Optional: log click
+          >
+            <Video className="mr-2 h-6 w-6" />
+            Video Call
+          </Button>
+          <p className="text-xs text-muted-foreground mt-[-0.5rem] mb-2">Coming Soon!</p>
+        </div>
+        
 
         <div className="w-full max-w-xs space-y-4 mb-8">
           <Button 

@@ -3,10 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import QuoteCard from '@/components/QuoteCard';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
-import { MessageSquare, Moon, Sun, History as HistoryIcon } from 'lucide-react';
-import { useTheme } from 'next-themes';
+import { MessageSquare, History as HistoryIcon } from 'lucide-react';
 
 const initialQuotes = [
   {
@@ -26,12 +23,6 @@ const initialQuotes = [
 const Index = () => {
   const [currentQuote, setCurrentQuote] = useState(initialQuotes[0]);
   const navigate = useNavigate();
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   const handleRefreshQuote = () => {
     const currentIndex = initialQuotes.findIndex(q => q.quote === currentQuote.quote);
@@ -49,10 +40,6 @@ const Index = () => {
     console.log("History button clicked");
     navigate('/history');
   };
-
-  if (!mounted) {
-    return null;
-  }
 
   return (
     <Layout>
@@ -87,19 +74,6 @@ const Index = () => {
             <HistoryIcon className="mr-2 h-6 w-6" />
             View History
           </Button>
-
-          <div className="flex items-center justify-between p-3 bg-card rounded-xl shadow-sm border">
-            <Label htmlFor="dark-mode-toggle" className="flex items-center text-foreground">
-              {theme === 'dark' ? <Moon className="mr-2 h-5 w-5 text-primary" /> : <Sun className="mr-2 h-5 w-5 text-primary" />}
-              Dark Mode
-            </Label>
-            <Switch
-              id="dark-mode-toggle"
-              checked={theme === 'dark'}
-              onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
-              aria-label="Toggle dark mode"
-            />
-          </div>
         </div>
       </div>
     </Layout>

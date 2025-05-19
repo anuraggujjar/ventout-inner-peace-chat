@@ -1,7 +1,12 @@
 
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Home, MessageSquare, Settings } from 'lucide-react'; // MessageSquare for chat placeholder
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Home, Settings, User, Sun, Moon } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -9,40 +14,81 @@ interface LayoutProps {
 
 const navItems = [
   { path: '/', label: 'Home', icon: Home },
-  // Placeholder for chat, perhaps directly go to a chat initiation screen or a list of active chats.
-  // For now, let's make it a direct link to a placeholder "Start Chat" or "Listeners" page.
-  // We'll use the home screen's "Start Talking" button for now.
   { path: '/settings', label: 'Settings', icon: Settings },
 ];
 
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const handleProfileClick = () => {
+    navigate('/settings');
+  };
+
+  if (!mounted) {
+    // To prevent hydration mismatch with next-themes, often good to return null or a loader
+    return (
+      <div className="flex flex-col min-h-screen bg-background text-foreground animate-pulse">
+        <header className="flex items-center justify-between p-4 border-b border-border h-16">
+           <div className="h-6 w-24 bg-muted rounded"></div>
+           <div className="h-8 w-8 bg-muted rounded-full"></div>
+        </header>
+        <main className="flex-grow container mx-auto px-4 py-6"></main>
+        <nav className="sticky bottom-0 left-0 right-0 bg-card border-t border-border shadow-md h-16"></nav>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground">
-      {/* Header (Optional, can be added later if needed for specific pages) */}
-      {/* <header className="p-4 border-b border-border">
-        <h1 className="text-xl font-semibold">VentOut</h1>
-      </header> */}
+      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-14 max-w-screen-2xl items-center justify-between">
+          <Link to="/" className="flex items-center space-x-2">
+            <img src="/lovable.svg" alt="VentOut Logo" className="h-6 w-auto" />
+            <span className="font-bold text-primary">VentOut</span>
+          </Link>
+          <Button variant="ghost" size="icon" onClick={handleProfileClick} aria-label="User Profile">
+            <User className="h-5 w-5" />
+          </Button>
+        </div>
+      </header>
       
       <main className="flex-grow container mx-auto px-4 py-6">
         {children}
       </main>
 
-      {/* Bottom Navigation */}
       <nav className="sticky bottom-0 left-0 right-0 bg-card border-t border-border shadow-md">
-        <div className="flex justify-around items-center h-16 max-w-md mx-auto">
+        <div className="flex justify-around items-center h-16 max-w-md mx-auto px-2">
           {navItems.map((item) => (
             <Link
               key={item.path}
               to={item.path}
-              className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors duration-200
+              className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors duration-200 w-1/3
                 ${location.pathname === item.path ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
             >
               <item.icon size={24} strokeWidth={location.pathname === item.path ? 2.5 : 2} />
               <span className="text-xs mt-1">{item.label}</span>
             </Link>
           ))}
+           <div className="flex flex-col items-center justify-center p-2 w-1/3">
+             <Label htmlFor="layout-dark-mode-toggle" className="cursor-pointer">
+              {theme === 'dark' ? <Moon size={24} className="text-primary" /> : <Sun size={24} className="text-primary" />}
+            </Label>
+            <Switch
+              id="layout-dark-mode-toggle"
+              checked={theme === 'dark'}
+              onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
+              className="mt-1"
+              aria-label="Toggle dark mode"
+            />
+            {/* <span className="text-xs mt-1 text-muted-foreground">Mode</span> */}
+          </div>
         </div>
       </nav>
     </div>

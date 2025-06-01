@@ -64,9 +64,9 @@ const TopicSelectionPage = () => {
   const handleTopicSelect = (topicId: string) => {
     setSelectedTopic(topicId);
     console.log(`Selected topic: ${topicId}`);
-    // Here you would typically proceed to the chat with the selected topic
+    // Navigate to feeling selection page instead of chat
     setTimeout(() => {
-      navigate('/chat', { state: { topic: topicId } });
+      navigate('/feeling-selection', { state: { topic: topicId } });
     }, 300);
   };
 

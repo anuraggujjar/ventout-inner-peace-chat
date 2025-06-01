@@ -26,7 +26,8 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/chat" element={<ChatPage />} />
             <Route path="/settings" element={<SettingsPage />} />
-            <Route path="/history" element={<HistoryPage />} /> {/* Add HistoryPage route */}
+            <Route path="/history" element={<HistoryPage />} />
+            <Route path="/topic-selection" element={<TopicSelectionPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

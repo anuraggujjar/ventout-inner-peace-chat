@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -52,7 +53,7 @@ const Index = () => {
         <div className="w-full max-w-xs space-y-4 mb-6">
           <Button 
             size="lg" 
-            className="w-full py-3 text-lg bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl shadow-md animate-pulse"
+            className="w-full py-3 text-lg bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl shadow-md"
             onClick={handleStartTalking}
           >
             <MessageSquare className="mr-2 h-6 w-6" />

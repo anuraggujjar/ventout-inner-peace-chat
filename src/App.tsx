@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -11,6 +12,7 @@ import SettingsPage from "./pages/SettingsPage";
 import HistoryPage from "./pages/HistoryPage";
 import TopicSelectionPage from "./pages/TopicSelectionPage";
 import FeelingSelectionPage from "./pages/FeelingSelectionPage";
+import ChatRequestSentPage from "./pages/ChatRequestSentPage";
 import './App.css';
 
 const queryClient = new QueryClient();
@@ -29,6 +31,7 @@ const App = () => (
             <Route path="/history" element={<HistoryPage />} />
             <Route path="/topic-selection" element={<TopicSelectionPage />} />
             <Route path="/feeling-selection" element={<FeelingSelectionPage />} />
+            <Route path="/chat-request-sent" element={<ChatRequestSentPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

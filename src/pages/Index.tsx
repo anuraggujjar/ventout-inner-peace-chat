@@ -33,10 +33,8 @@ const Index = () => {
 
   const handleStartTalking = () => {
     console.log("Start Talking clicked");
-    navigate('/chat');
+    navigate('/topic-selection');
   };
-
-  // Removed handleGoToHistory function
 
   return (
     <Layout>

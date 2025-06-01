@@ -4,12 +4,13 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ThemeProvider } from "next-themes"; // Import ThemeProvider
+import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ChatPage from "./pages/ChatPage";
 import SettingsPage from "./pages/SettingsPage";
-import HistoryPage from "./pages/HistoryPage"; // Import HistoryPage
+import HistoryPage from "./pages/HistoryPage";
+import TopicSelectionPage from "./pages/TopicSelectionPage";
 import './App.css';
 
 const queryClient = new QueryClient();

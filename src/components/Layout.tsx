@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Settings, User, Sun, Moon, History as HistoryIcon } from 'lucide-react';
+import { Home, Settings, Sun, Moon, History as HistoryIcon } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
+import UserProfile from '@/components/UserProfile';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -25,10 +26,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  const handleProfileClick = () => {
-    navigate('/settings');
-  };
 
   if (!mounted) {
     return (
@@ -51,9 +48,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <img src="/lovable.svg" alt="VentOut Logo" className="h-6 w-auto" />
             <span className="font-bold text-primary">VentOut</span>
           </Link>
-          <Button variant="ghost" size="icon" onClick={handleProfileClick} aria-label="User Profile">
-            <User className="h-5 w-5" />
-          </Button>
+          <UserProfile />
         </div>
       </header>
       

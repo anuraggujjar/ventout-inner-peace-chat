@@ -69,23 +69,23 @@ const TopicSelectionPage = () => {
 
   return (
     <Layout>
-      <div className="max-w-2xl mx-auto py-8">
-        <div className="flex items-center mb-8">
+      <div className="max-w-2xl mx-auto py-4 px-2">
+        <div className="flex items-center mb-6">
           <Button
             variant="ghost"
             size="icon"
             onClick={handleGoBack}
-            className="mr-4"
+            className="mr-4 flex-shrink-0"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">Choose a Topic</h1>
-            <p className="text-muted-foreground">Select what you'd like to talk about today</p>
+          <div className="min-w-0">
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Choose a Topic</h1>
+            <p className="text-muted-foreground text-sm md:text-base">Select what you'd like to talk about today</p>
           </div>
         </div>
 
-        <div className="grid gap-4">
+        <div className="grid gap-3">
           {topics.map((topic) => {
             const IconComponent = topic.icon;
             return (
@@ -93,19 +93,19 @@ const TopicSelectionPage = () => {
                 key={topic.id}
                 variant="outline"
                 onClick={() => handleTopicSelect(topic.id)}
-                className={`w-full justify-start text-left p-6 h-auto border-2 transition-colors duration-200 ${
+                className={`w-full justify-start text-left p-4 h-auto border-2 transition-colors duration-200 ${
                   selectedTopic === topic.id 
                     ? 'border-foreground bg-muted' 
                     : 'border-muted-foreground/20 hover:border-muted-foreground/40'
                 }`}
               >
-                <div className="flex items-center space-x-4 w-full">
+                <div className="flex items-center space-x-3 w-full">
                   <div className="flex-shrink-0">
-                    <IconComponent className="h-6 w-6 text-muted-foreground" />
+                    <IconComponent className="h-5 w-5 md:h-6 md:w-6 text-muted-foreground" />
                   </div>
-                  <div className="flex-grow">
-                    <div className="font-semibold text-lg mb-1 text-foreground">{topic.title}</div>
-                    <div className="text-sm text-muted-foreground">{topic.description}</div>
+                  <div className="flex-grow min-w-0">
+                    <div className="font-semibold text-base md:text-lg mb-1 text-foreground truncate">{topic.title}</div>
+                    <div className="text-xs md:text-sm text-muted-foreground line-clamp-2">{topic.description}</div>
                   </div>
                 </div>
               </Button>
@@ -113,8 +113,8 @@ const TopicSelectionPage = () => {
           })}
         </div>
 
-        <div className="mt-8 p-4 bg-muted/50 rounded-lg border border-muted-foreground/20">
-          <p className="text-sm text-muted-foreground text-center">
+        <div className="mt-6 p-3 bg-muted/50 rounded-lg border border-muted-foreground/20">
+          <p className="text-xs md:text-sm text-muted-foreground text-center">
             Your conversation will be completely anonymous and confidential. 
             Choose the topic that best matches what you want to discuss.
           </p>

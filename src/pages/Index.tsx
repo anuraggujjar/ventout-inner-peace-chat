@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import QuoteCard from '@/components/QuoteCard';
 import { Button } from '@/components/ui/button';
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, Video } from 'lucide-react';
 
 const initialQuotes = [
   {
@@ -137,6 +136,19 @@ const Index = () => {
             Start Talking
           </Button>
           <p className="text-xs text-muted-foreground mt-[-0.5rem] mb-2">Connect anonymously with a listener.</p>
+          
+          <Button 
+            size="lg" 
+            variant="outline"
+            className="w-full py-3 text-lg rounded-xl shadow-md relative"
+            disabled
+          >
+            <Video className="mr-2 h-6 w-6" />
+            Video Call
+            <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
+              Coming Soon
+            </span>
+          </Button>
         </div>
       </div>
     </Layout>

@@ -1,134 +1,193 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Layout from '@/components/Layout';
+import { MessageCircle, Video, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, MessageCircle, Heart, Briefcase, Users, Home, Rainbow, User } from 'lucide-react';
-import { validateTopicSelection } from '@/utils/privacy';
-import { useSecurity } from '@/contexts/SecurityContext';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import Layout from '@/components/Layout';
 
 const topics = [
   {
-    id: 'general',
-    title: 'I just want to talk',
-    description: 'Open conversation about anything',
-    icon: MessageCircle,
+    id: 'anxiety',
+    title: 'Anxiety & Stress',
+    description: 'Managing overwhelming feelings and daily pressures',
+    color: 'from-blue-50 to-blue-100 border-blue-200 hover:from-blue-100 hover:to-blue-150',
+    textColor: 'text-blue-700',
+  },
+  {
+    id: 'depression',
+    title: 'Depression & Mood',
+    description: 'Working through low mood and emotional challenges',
+    color: 'from-purple-50 to-purple-100 border-purple-200 hover:from-purple-100 hover:to-purple-150',
+    textColor: 'text-purple-700',
   },
   {
     id: 'relationships',
     title: 'Relationships',
-    description: 'Dating, friendships, and connections',
-    icon: Heart,
+    description: 'Navigating personal and professional relationships',
+    color: 'from-pink-50 to-pink-100 border-pink-200 hover:from-pink-100 hover:to-pink-150',
+    textColor: 'text-pink-700',
   },
   {
-    id: 'work-stress',
-    title: 'Work life stress',
-    description: 'Career, workplace, and professional challenges',
-    icon: Briefcase,
+    id: 'work-life',
+    title: 'Work & Life Balance',
+    description: 'Finding harmony between career and personal life',
+    color: 'from-green-50 to-green-100 border-green-200 hover:from-green-100 hover:to-green-150',
+    textColor: 'text-green-700',
   },
   {
-    id: 'family',
-    title: 'Family Issues',
-    description: 'Family dynamics and relationships',
-    icon: Users,
+    id: 'self-esteem',
+    title: 'Self-Esteem & Confidence',
+    description: 'Building a positive relationship with yourself',
+    color: 'from-amber-50 to-amber-100 border-amber-200 hover:from-amber-100 hover:to-amber-150',
+    textColor: 'text-amber-700',
   },
   {
-    id: 'married-life',
-    title: 'Married Life',
-    description: 'Marriage, partnership, and commitment',
-    icon: Home,
+    id: 'grief',
+    title: 'Grief & Loss',
+    description: 'Processing loss and major life changes',
+    color: 'from-slate-50 to-slate-100 border-slate-200 hover:from-slate-100 hover:to-slate-150',
+    textColor: 'text-slate-700',
   },
   {
-    id: 'lgbtq',
-    title: 'LGBTQ Identity Confusion',
-    description: 'Sexual orientation and gender identity',
-    icon: Rainbow,
+    id: 'other',
+    title: 'Other',
+    description: 'Something else on your mind',
+    color: 'from-teal-50 to-teal-100 border-teal-200 hover:from-teal-100 hover:to-teal-150',
+    textColor: 'text-teal-700',
   },
-  {
-    id: 'loneliness',
-    title: 'Loneliness & Depression',
-    description: 'Mental health and emotional well-being',
-    icon: User,
-  }
 ];
 
-const TopicSelectionPage = () => {
+const TopicSelectionPage: React.FC = () => {
   const navigate = useNavigate();
-  const { sessionId } = useSecurity();
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
+  const [communicationType, setCommunicationType] = useState<'chat' | 'video'>('chat');
 
   const handleTopicSelect = (topicId: string) => {
-    // Validate topic selection for security
-    if (!validateTopicSelection(topicId)) {
-      console.error('Invalid topic selection:', topicId);
-      return;
-    }
-
     setSelectedTopic(topicId);
-    console.log(`Selected topic: ${topicId}, Session: ${sessionId}`);
-    
-    // Navigate to feeling selection page instead of chat
-    setTimeout(() => {
-      navigate('/feeling-selection', { state: { topic: topicId } });
-    }, 300);
   };
 
-  const handleGoBack = () => {
-    navigate('/');
+  const handleContinue = () => {
+    if (selectedTopic && communicationType === 'chat') {
+      // Store the selected topic in sessionStorage or pass via state
+      sessionStorage.setItem('selectedTopic', selectedTopic);
+      navigate('/feeling-selection');
+    }
   };
+
+  const selectedTopicData = topics.find(topic => topic.id === selectedTopic);
 
   return (
     <Layout>
-      <div className="max-w-2xl mx-auto py-4 px-2">
-        <div className="flex items-center mb-6">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleGoBack}
-            className="mr-4 flex-shrink-0"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div className="min-w-0">
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">Choose a Topic</h1>
-            <p className="text-muted-foreground text-sm md:text-base">Select what you'd like to talk about today</p>
+      <div className="max-w-4xl mx-auto space-y-8">
+        <div className="text-center space-y-4">
+          <h1 className="text-3xl font-bold text-foreground">
+            What would you like to talk about?
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            Choose a topic that best describes what's on your mind. This helps us connect you with the right support.
+          </p>
+        </div>
+
+        {/* Communication Type Selection */}
+        <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+          <CardHeader>
+            <CardTitle className="text-lg font-semibold">How would you like to connect?</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <button
+                onClick={() => setCommunicationType('chat')}
+                className={`p-4 rounded-lg border-2 transition-all duration-300 text-left ${
+                  communicationType === 'chat'
+                    ? 'border-primary bg-gradient-to-br from-primary/10 to-primary/5 shadow-lg'
+                    : 'border-gray-200 bg-gradient-to-br from-gray-50 to-white hover:from-primary/5 hover:to-primary/10 hover:border-primary/30'
+                }`}
+              >
+                <div className="flex items-center space-x-3">
+                  <MessageCircle className={`h-6 w-6 ${communicationType === 'chat' ? 'text-primary' : 'text-gray-500'}`} />
+                  <div>
+                    <h3 className="font-semibold">Text Chat</h3>
+                    <p className="text-sm text-muted-foreground">Connect through messaging</p>
+                  </div>
+                </div>
+              </button>
+
+              <button
+                onClick={() => setCommunicationType('video')}
+                className={`p-4 rounded-lg border-2 transition-all duration-300 text-left relative ${
+                  communicationType === 'video'
+                    ? 'border-primary bg-gradient-to-br from-primary/10 to-primary/5 shadow-lg'
+                    : 'border-gray-200 bg-gradient-to-br from-gray-50 to-white hover:from-primary/5 hover:to-primary/10 hover:border-primary/30'
+                }`}
+              >
+                <div className="flex items-center space-x-3">
+                  <Video className={`h-6 w-6 ${communicationType === 'video' ? 'text-primary' : 'text-gray-500'}`} />
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2">
+                      <h3 className="font-semibold">Video Call</h3>
+                      <Badge variant="secondary" className="text-xs bg-gradient-to-r from-amber-100 to-amber-200 text-amber-800">
+                        Coming Soon
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">Face-to-face conversation</p>
+                  </div>
+                </div>
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Topic Selection */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold text-center">Select a topic</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {topics.map((topic) => (
+              <Card
+                key={topic.id}
+                className={`cursor-pointer transition-all duration-300 border-2 bg-gradient-to-br ${topic.color} ${
+                  selectedTopic === topic.id
+                    ? 'shadow-lg transform scale-105 border-primary'
+                    : 'hover:shadow-md hover:transform hover:scale-102'
+                }`}
+                onClick={() => handleTopicSelect(topic.id)}
+              >
+                <CardContent className="p-6">
+                  <h3 className={`font-semibold text-lg mb-2 ${topic.textColor}`}>
+                    {topic.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {topic.description}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
 
-        <div className="grid gap-3">
-          {topics.map((topic) => {
-            const IconComponent = topic.icon;
-            return (
-              <Button
-                key={topic.id}
-                variant="outline"
-                onClick={() => handleTopicSelect(topic.id)}
-                className={`w-full justify-start text-left p-4 h-auto border-2 transition-colors duration-200 ${
-                  selectedTopic === topic.id 
-                    ? 'border-foreground bg-muted' 
-                    : 'border-muted-foreground/20 hover:border-muted-foreground/40'
-                }`}
-              >
-                <div className="flex items-center space-x-3 w-full">
-                  <div className="flex-shrink-0">
-                    <IconComponent className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
-                  </div>
-                  <div className="flex-grow min-w-0">
-                    <div className="font-semibold text-base md:text-lg mb-1 text-foreground truncate">{topic.title}</div>
-                    <div className="text-xs md:text-sm text-muted-foreground line-clamp-2">{topic.description}</div>
-                  </div>
-                </div>
-              </Button>
-            );
-          })}
-        </div>
-
-        <div className="mt-6 p-3 bg-muted/50 rounded-lg border border-muted-foreground/20">
-          <p className="text-xs md:text-sm text-muted-foreground text-center">
-            Your conversation will be completely anonymous and confidential. 
-            Choose the topic that best matches what you want to discuss.
-          </p>
-        </div>
+        {/* Continue Button */}
+        {selectedTopic && (
+          <div className="flex justify-center pt-6">
+            <Button
+              onClick={handleContinue}
+              disabled={communicationType === 'video'}
+              size="lg"
+              className="px-8 py-3 text-lg font-semibold bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-lg hover:shadow-xl transition-all duration-300"
+            >
+              {communicationType === 'video' ? (
+                <>
+                  Video calls coming soon
+                </>
+              ) : (
+                <>
+                  Continue with {selectedTopicData?.title}
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </div>
     </Layout>
   );

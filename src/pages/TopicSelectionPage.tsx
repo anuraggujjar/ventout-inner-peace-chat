@@ -101,7 +101,7 @@ const TopicSelectionPage = () => {
               >
                 <div className="flex items-center space-x-3 w-full">
                   <div className="flex-shrink-0">
-                    <IconComponent className="h-5 w-5 md:h-6 md:w-6 text-muted-foreground" />
+                    <IconComponent className="h-4 w-4 md:h-5 md:w-5 text-muted-foreground" />
                   </div>
                   <div className="flex-grow min-w-0">
                     <div className="font-semibold text-base md:text-lg mb-1 text-foreground truncate">{topic.title}</div>

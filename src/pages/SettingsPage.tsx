@@ -5,8 +5,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
-import { Shield, Bell, Eye, Trash2, Download } from 'lucide-react';
+import { Shield, Bell, Eye, Trash2, Download, User, Edit3, Save, X } from 'lucide-react';
 import { useSecurity } from '@/contexts/SecurityContext';
 import { useToast } from '@/hooks/use-toast';
 
@@ -16,6 +18,13 @@ const SettingsPage = () => {
   const [notifications, setNotifications] = useState(true);
   const [analytics, setAnalytics] = useState(false);
   const [autoDelete, setAutoDelete] = useState(true);
+  
+  // User profile states
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [displayName, setDisplayName] = useState('Anonymous User');
+  const [bio, setBio] = useState('Welcome to my mental health journey. I\'m here to find support and share experiences in a safe space.');
+  const [tempDisplayName, setTempDisplayName] = useState(displayName);
+  const [tempBio, setTempBio] = useState(bio);
 
   const handleClearData = () => {
     clearSession();
@@ -28,6 +37,11 @@ const SettingsPage = () => {
   const handleExportData = () => {
     const data = {
       sessionId,
+      userProfile: {
+        displayName,
+        bio,
+        joinDate: new Date().toISOString()
+      },
       preferences: {
         notifications,
         analytics,
@@ -52,13 +66,116 @@ const SettingsPage = () => {
     });
   };
 
+  const handleSaveProfile = () => {
+    setDisplayName(tempDisplayName);
+    setBio(tempBio);
+    setIsEditingProfile(false);
+    toast({
+      title: "Profile Updated",
+      description: "Your profile has been saved successfully.",
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setTempDisplayName(displayName);
+    setTempBio(bio);
+    setIsEditingProfile(false);
+  };
+
   return (
     <Layout>
       <div className="max-w-2xl mx-auto py-6 space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-foreground mb-2">Settings</h1>
-          <p className="text-muted-foreground">Manage your privacy and preferences</p>
+          <p className="text-muted-foreground">Manage your profile, privacy and preferences</p>
         </div>
+
+        {/* User Profile */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <User className="h-5 w-5" />
+                <span>User Profile</span>
+              </div>
+              {!isEditingProfile && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsEditingProfile(true)}
+                >
+                  <Edit3 className="h-4 w-4 mr-2" />
+                  Edit
+                </Button>
+              )}
+            </CardTitle>
+            <CardDescription>Your profile information and bio</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {isEditingProfile ? (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="display-name">Display Name</Label>
+                  <Input
+                    id="display-name"
+                    value={tempDisplayName}
+                    onChange={(e) => setTempDisplayName(e.target.value)}
+                    placeholder="Enter your display name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="bio">Bio</Label>
+                  <Textarea
+                    id="bio"
+                    value={tempBio}
+                    onChange={(e) => setTempBio(e.target.value)}
+                    placeholder="Tell us about yourself..."
+                    className="min-h-[100px] resize-none"
+                    maxLength={500}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {tempBio.length}/500 characters
+                  </p>
+                </div>
+                <div className="flex space-x-2">
+                  <Button onClick={handleSaveProfile} size="sm">
+                    <Save className="h-4 w-4 mr-2" />
+                    Save
+                  </Button>
+                  <Button variant="outline" onClick={handleCancelEdit} size="sm">
+                    <X className="h-4 w-4 mr-2" />
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div>
+                  <p className="font-medium text-foreground">{displayName}</p>
+                  <p className="text-sm text-muted-foreground">Display Name</p>
+                </div>
+                <div>
+                  <p className="text-sm text-foreground mb-2">{bio}</p>
+                  <p className="text-xs text-muted-foreground">Bio</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  <div>
+                    <p className="text-sm font-medium">Session ID</p>
+                    <p className="text-xs text-muted-foreground font-mono">
+                      {sessionId.slice(-12)}...
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Member Since</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date().toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Security Status */}
         <Card>
@@ -85,10 +202,13 @@ const SettingsPage = () => {
             </div>
             <div className="flex justify-between items-center">
               <div>
-                <p className="font-medium">Session ID</p>
-                <p className="text-sm text-muted-foreground font-mono">
-                  {sessionId}
+                <p className="font-medium">Session Status</p>
+                <p className="text-sm text-muted-foreground">
+                  Active anonymous session
                 </p>
+              </div>
+              <div className="px-2 py-1 rounded-full text-xs bg-blue-100 text-blue-800">
+                Active
               </div>
             </div>
           </CardContent>

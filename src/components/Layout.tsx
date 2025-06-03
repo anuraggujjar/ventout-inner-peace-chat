@@ -5,6 +5,7 @@ import { Home, Settings, Sun, Moon, History as HistoryIcon } from 'lucide-react'
 import { useTheme } from 'next-themes';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import UserProfile from '@/components/UserProfile';
 
 interface LayoutProps {
@@ -48,7 +49,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <img src="/lovable.svg" alt="VentOut Logo" className="h-6 w-auto" />
             <span className="font-bold text-primary">VentOut</span>
           </Link>
-          <UserProfile />
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              aria-label="Toggle dark mode"
+            >
+              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </Button>
+            <UserProfile />
+          </div>
         </div>
       </header>
       
@@ -62,25 +73,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <Link
               key={item.path}
               to={item.path}
-              className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors duration-200 w-1/${navItems.length + 1} 
+              className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors duration-200 w-1/${navItems.length} 
                 ${location.pathname === item.path ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
             >
               <item.icon size={24} strokeWidth={location.pathname === item.path ? 2.5 : 2} />
               <span className="text-xs mt-1">{item.label}</span>
             </Link>
           ))}
-           <div className={`flex flex-col items-center justify-center p-2 w-1/${navItems.length + 1}`}>
-             <Label htmlFor="layout-dark-mode-toggle" className="cursor-pointer">
-              {theme === 'dark' ? <Moon size={24} className="text-primary" /> : <Sun size={24} className="text-primary" />}
-            </Label>
-            <Switch
-              id="layout-dark-mode-toggle"
-              checked={theme === 'dark'}
-              onCheckedChange={(checked) => setTheme(checked ? 'dark' : 'light')}
-              className="mt-1"
-              aria-label="Toggle dark mode"
-            />
-          </div>
         </div>
       </nav>
     </div>

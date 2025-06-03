@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, MessageCircle, Heart, Briefcase, Users, Home, Rainbow, User } from 'lucide-react';
+import { validateTopicSelection } from '@/utils/privacy';
+import { useSecurity } from '@/contexts/SecurityContext';
 
 const topics = [
   {
@@ -52,11 +54,19 @@ const topics = [
 
 const TopicSelectionPage = () => {
   const navigate = useNavigate();
+  const { sessionId } = useSecurity();
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
 
   const handleTopicSelect = (topicId: string) => {
+    // Validate topic selection for security
+    if (!validateTopicSelection(topicId)) {
+      console.error('Invalid topic selection:', topicId);
+      return;
+    }
+
     setSelectedTopic(topicId);
-    console.log(`Selected topic: ${topicId}`);
+    console.log(`Selected topic: ${topicId}, Session: ${sessionId}`);
+    
     // Navigate to feeling selection page instead of chat
     setTimeout(() => {
       navigate('/feeling-selection', { state: { topic: topicId } });

@@ -1,9 +1,9 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import Layout from '@/components/Layout';
+import FeedbackModal from '@/components/FeedbackModal';
 import { Button } from '@/components/ui/button';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Video, ShieldAlert, XCircle, MessageCircle, Send, User, Heart, Phone } from 'lucide-react';
+import { ShieldAlert, XCircle, MessageCircle, Send, User, Heart } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
@@ -25,6 +25,7 @@ const ChatPage = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connected');
+  const [showFeedback, setShowFeedback] = useState(false);
   
   const { userName = 'You', listenerName = 'Sarah', topic, feeling } = location.state || {};
 
@@ -91,9 +92,26 @@ const ChatPage = () => {
   };
 
   const handleEndChat = () => {
+    setShowFeedback(true);
+  };
+
+  const handleFeedbackSubmit = (rating: number, feedbackText: string) => {
+    console.log('Feedback submitted:', { rating, feedbackText, sessionDetails: { topic, feeling, messageCount: messages.length } });
+    
+    // Here you would typically send the feedback to your backend
     toast({
       title: "Chat Ended",
-      description: "Thank you for using Sola. Take care of yourself.",
+      description: "Thank you for using VentOut and for your feedback. Take care of yourself.",
+    });
+    
+    navigate('/');
+  };
+
+  const handleFeedbackClose = () => {
+    setShowFeedback(false);
+    toast({
+      title: "Chat Ended",
+      description: "Thank you for using VentOut. Take care of yourself.",
     });
     navigate('/');
   };
@@ -257,28 +275,13 @@ const ChatPage = () => {
             </div>
           </div>
           
-          <div className="flex justify-between items-center">
-            <div className="flex space-x-2">
-              <Button variant="outline" size="sm" onClick={handleEndChat} className="hover:scale-105 transition-transform duration-200">
-                <XCircle className="mr-2 h-4 w-4" /> End Chat
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleReport} className="hover:scale-105 transition-transform duration-200">
-                <ShieldAlert className="mr-2 h-4 w-4" /> Report
-              </Button>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm" className="text-muted-foreground">
-                <Phone size={16} className="mr-2" />
-                <span className="hidden sm:inline">Voice Call - Coming Soon!</span>
-                <span className="sm:hidden">Voice</span>
-              </Button>
-              <Button variant="ghost" size="sm" className="text-muted-foreground">
-                <Video size={16} className="mr-2" />
-                <span className="hidden sm:inline">Video Call - Coming Soon!</span>
-                <span className="sm:hidden">Video</span>
-              </Button>
-            </div>
+          <div className="flex justify-center space-x-3">
+            <Button variant="outline" size="sm" onClick={handleEndChat} className="hover:scale-105 transition-transform duration-200">
+              <XCircle className="mr-2 h-4 w-4" /> End Chat
+            </Button>
+            <Button variant="outline" size="sm" onClick={handleReport} className="hover:scale-105 transition-transform duration-200">
+              <ShieldAlert className="mr-2 h-4 w-4" /> Report
+            </Button>
           </div>
         </div>
 
@@ -289,6 +292,13 @@ const ChatPage = () => {
           </p>
         </div>
       </div>
+
+      {/* Feedback Modal */}
+      <FeedbackModal
+        isOpen={showFeedback}
+        onClose={handleFeedbackClose}
+        onSubmit={handleFeedbackSubmit}
+      />
     </Layout>
   );
 };

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import QuoteCard from '@/components/QuoteCard';
 import { Button } from '@/components/ui/button';
-import { MessageSquare, Video } from 'lucide-react'; // Removed HistoryIcon
+import { MessageSquare } from 'lucide-react';
 
 const initialQuotes = [
   {
@@ -20,6 +20,23 @@ const initialQuotes = [
     author: "Nido Qubein"
   }
 ];
+
+const SoothingAnimation = () => {
+  return (
+    <div className="flex justify-center items-center mb-8">
+      <div className="relative">
+        {/* Outer ring */}
+        <div className="w-20 h-20 rounded-full border-2 border-primary/30 animate-pulse"></div>
+        {/* Middle ring */}
+        <div className="absolute inset-2 w-16 h-16 rounded-full border-2 border-primary/50 animate-[pulse_2s_ease-in-out_infinite]"></div>
+        {/* Inner ring */}
+        <div className="absolute inset-4 w-12 h-12 rounded-full border-2 border-primary/70 animate-[pulse_3s_ease-in-out_infinite]"></div>
+        {/* Center dot */}
+        <div className="absolute inset-8 w-4 h-4 rounded-full bg-primary animate-[pulse_1.5s_ease-in-out_infinite]"></div>
+      </div>
+    </div>
+  );
+};
 
 const Index = () => {
   const [currentQuote, setCurrentQuote] = useState(initialQuotes[0]);
@@ -40,8 +57,8 @@ const Index = () => {
   return (
     <Layout>
       <div className="flex flex-col items-center justify-center text-center py-8">
-        <img src="/lovable.svg" alt="VentOut Logo" className="h-16 w-auto mb-4" />
-        <h1 className="text-4xl font-bold text-primary mb-2">VentOut</h1>
+        <SoothingAnimation />
+        <h1 className="text-4xl font-bold text-primary mb-2">Sola</h1>
         <p className="text-muted-foreground mb-8">Your safe space to be heard.</p>
 
         <QuoteCard
@@ -60,20 +77,7 @@ const Index = () => {
             Start Talking
           </Button>
           <p className="text-xs text-muted-foreground mt-[-0.5rem] mb-2">Connect anonymously with a listener.</p>
-
-          <Button 
-            size="lg" 
-            variant="outline"
-            className="w-full py-3 text-lg bg-secondary/50 hover:bg-secondary/70 text-secondary-foreground rounded-xl shadow-md border-dashed border-primary/50"
-            disabled 
-          >
-            <Video className="mr-2 h-6 w-6" />
-            Video Call
-          </Button>
-          <p className="text-xs text-muted-foreground mt-[-0.5rem] mb-2">Coming Soon!</p>
         </div>
-        
-        {/* Removed the View History button and its container div */}
       </div>
     </Layout>
   );

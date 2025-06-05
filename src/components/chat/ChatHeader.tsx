@@ -5,7 +5,7 @@ import { Heart, MessageCircle } from 'lucide-react';
 
 interface ChatHeaderProps {
   userRole: 'listener' | 'talker';
-  connectionStatus: 'connecting' | 'connected' | 'waiting' | 'disconnected';
+  connectionStatus: 'connecting' | 'connected' | 'disconnected';
   sessionId: string;
   topic?: string;
   feeling?: string;

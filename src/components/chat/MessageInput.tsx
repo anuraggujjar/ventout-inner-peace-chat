@@ -9,7 +9,7 @@ interface MessageInputProps {
   onSendMessage: () => void;
   onEndChat: () => void;
   onReport: () => void;
-  connectionStatus: 'connecting' | 'connected' | 'waiting' | 'disconnected';
+  connectionStatus: 'connecting' | 'connected' | 'disconnected';
 }
 
 const MessageInput = ({ 

@@ -5,7 +5,6 @@ import FeedbackModal from '@/components/FeedbackModal';
 import ChatHeader from '@/components/chat/ChatHeader';
 import MessageList from '@/components/chat/MessageList';
 import MessageInput from '@/components/chat/MessageInput';
-import WaitingRoom from '@/components/chat/WaitingRoom';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { sanitizeInput } from '@/utils/privacy';
@@ -24,12 +23,11 @@ const ChatPage = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
-  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'waiting' | 'disconnected'>('connecting');
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
   const [showFeedback, setShowFeedback] = useState(false);
   const [userRole, setUserRole] = useState<'listener' | 'talker'>('talker');
   const [partnerTyping, setPartnerTyping] = useState(false);
   const [sessionId, setSessionId] = useState<string>('');
-  const [waitingTime, setWaitingTime] = useState(0);
   
   const { topic, feeling } = location.state || {};
 
@@ -42,7 +40,7 @@ const ChatPage = () => {
   }, [messages]);
 
   useEffect(() => {
-    // Initialize chat session
+    // Initialize chat session directly
     initializeChatSession();
     
     return () => {
@@ -53,51 +51,34 @@ const ChatPage = () => {
     };
   }, []);
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (connectionStatus === 'waiting') {
-      interval = setInterval(() => {
-        setWaitingTime(prev => prev + 1);
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [connectionStatus]);
-
   const initializeChatSession = async () => {
     try {
       // Generate session ID and determine role
       const newSessionId = 'chat_' + Math.random().toString(36).substr(2, 9);
       setSessionId(newSessionId);
       
-      // In a real implementation, you would connect to a WebSocket or real-time service
-      // For now, we'll simulate the connection process
-      setConnectionStatus('waiting');
+      // Connect directly without waiting room
+      setConnectionStatus('connected');
       
-      // Simulate finding a partner after 3-8 seconds
-      const waitTime = 3000 + Math.random() * 5000;
-      setTimeout(() => {
-        setConnectionStatus('connected');
-        
-        // Randomly assign roles or use URL parameter
-        const role = Math.random() > 0.5 ? 'listener' : 'talker';
-        setUserRole(role);
-        
-        // Add welcome message
-        const welcomeMessage: Message = {
-          id: '1',
-          sender: role === 'listener' ? 'talker' : 'listener',
-          content: role === 'listener' 
-            ? "Hi! I'm here and ready to talk. Thank you for being willing to listen."
-            : "Hello! I'm here to listen. Feel free to share whatever is on your mind - this is a safe space.",
-          timestamp: new Date()
-        };
-        setMessages([welcomeMessage]);
-        
-        toast({
-          title: "Connected!",
-          description: `You're now connected as a ${role}. The conversation is completely anonymous.`,
-        });
-      }, waitTime);
+      // Randomly assign roles or use URL parameter
+      const role = Math.random() > 0.5 ? 'listener' : 'talker';
+      setUserRole(role);
+      
+      // Add welcome message
+      const welcomeMessage: Message = {
+        id: '1',
+        sender: role === 'listener' ? 'talker' : 'listener',
+        content: role === 'listener' 
+          ? "Hi! I'm here and ready to talk. Thank you for being willing to listen."
+          : "Hello! I'm here to listen. Feel free to share whatever is on your mind - this is a safe space.",
+        timestamp: new Date()
+      };
+      setMessages([welcomeMessage]);
+      
+      toast({
+        title: "Connected!",
+        description: `You're now connected as a ${role}. The conversation is completely anonymous.`,
+      });
       
     } catch (error) {
       console.error('Failed to initialize chat session:', error);
@@ -179,18 +160,6 @@ const ChatPage = () => {
       description: "Thank you for your feedback. We take all reports seriously.",
     });
   };
-
-  if (connectionStatus === 'waiting') {
-    return (
-      <Layout>
-        <WaitingRoom
-          waitingTime={waitingTime}
-          topic={topic}
-          onCancel={() => navigate('/')}
-        />
-      </Layout>
-    );
-  }
 
   return (
     <Layout>

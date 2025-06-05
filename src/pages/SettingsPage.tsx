@@ -54,7 +54,7 @@ const SettingsPage = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `sola-data-export-${Date.now()}.json`;
+    a.download = `ventout-data-export-${Date.now()}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -309,13 +309,13 @@ const SettingsPage = () => {
         {/* Information */}
         <Card>
           <CardHeader>
-            <CardTitle>About Sola</CardTitle>
-            <CardDescription>Your safe space for mental health support</CardDescription>
+            <CardTitle>About VentOut</CardTitle>
+            <CardDescription>Your safe space to be heard</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground mb-4">
-              Sola provides anonymous, confidential mental health support through trained listeners. 
-              Your privacy and security are our top priorities.
+              VentOut provides a safe, anonymous space for mental health support where you can freely express your thoughts and feelings. 
+              Connect with caring listeners or become a listener yourself to help others on their journey.
             </p>
             <div className="text-xs text-muted-foreground space-y-1">
               <p>Version: 1.0.0</p>

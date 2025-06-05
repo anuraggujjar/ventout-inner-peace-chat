@@ -2,10 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import QuoteCard from '@/components/QuoteCard';
-import RoleSelector from '@/components/RoleSelector';
 import { Button } from '@/components/ui/button';
 import { MessageSquare, Video } from 'lucide-react';
-import { useUserRole } from '@/contexts/UserRoleContext';
 
 const initialQuotes = [
   {
@@ -101,9 +99,7 @@ const HealingAnimation = () => {
 
 const Index = () => {
   const [currentQuote, setCurrentQuote] = useState(initialQuotes[0]);
-  const [showRoleSelector, setShowRoleSelector] = useState(false);
   const navigate = useNavigate();
-  const { isListener, isTalker } = useUserRole();
 
   const handleRefreshQuote = () => {
     const currentIndex = initialQuotes.findIndex(q => q.quote === currentQuote.quote);
@@ -114,25 +110,8 @@ const Index = () => {
 
   const handleStartTalking = () => {
     console.log("Start Talking clicked");
-    setShowRoleSelector(true);
+    navigate('/topic-selection');
   };
-
-  const handleRoleSelected = () => {
-    setShowRoleSelector(false);
-    if (isListener) {
-      navigate('/listener-dashboard');
-    } else {
-      navigate('/topic-selection');
-    }
-  };
-
-  if (showRoleSelector) {
-    return (
-      <Layout>
-        <RoleSelector onRoleSelected={handleRoleSelected} />
-      </Layout>
-    );
-  }
 
   return (
     <Layout>
@@ -154,9 +133,9 @@ const Index = () => {
             onClick={handleStartTalking}
           >
             <MessageSquare className="mr-2 h-6 w-6" />
-            Get Started
+            Start Talking
           </Button>
-          <p className="text-xs text-muted-foreground mt-[-0.5rem] mb-2">Connect as a talker or listener.</p>
+          <p className="text-xs text-muted-foreground mt-[-0.5rem] mb-2">Connect anonymously with a listener.</p>
           
           <Button 
             size="lg" 

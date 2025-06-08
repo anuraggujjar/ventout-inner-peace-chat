@@ -1,13 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import QuoteCard from '@/components/QuoteCard';
-import RoleSelector from '@/components/RoleSelector';
 import { Button } from '@/components/ui/button';
 import { MessageSquare, Video } from 'lucide-react';
-import { useUserRole } from '@/contexts/UserRoleContext';
-import { useAuth } from '@/contexts/AuthContext';
 
 const initialQuotes = [
   {
@@ -104,23 +100,6 @@ const HealingAnimation = () => {
 const Index = () => {
   const [currentQuote, setCurrentQuote] = useState(initialQuotes[0]);
   const navigate = useNavigate();
-  const { userRole, isListener, isTalker } = useUserRole();
-  const { user, loading } = useAuth();
-
-  // Redirect based on authentication and role
-  useEffect(() => {
-    if (!loading) {
-      if (!user) {
-        // User not authenticated, they can see the landing page
-        return;
-      }
-      
-      if (isListener) {
-        navigate('/listener-dashboard');
-      }
-      // If talker, stay on this page
-    }
-  }, [user, loading, isListener, navigate]);
 
   const handleRefreshQuote = () => {
     const currentIndex = initialQuotes.findIndex(q => q.quote === currentQuote.quote);
@@ -134,96 +113,46 @@ const Index = () => {
     navigate('/topic-selection');
   };
 
-  const handleSignIn = () => {
-    navigate('/auth');
-  };
+  return (
+    <Layout>
+      <div className="flex flex-col items-center justify-center text-center py-8">
+        <HealingAnimation />
+        <h1 className="text-4xl font-bold text-primary mb-2">VentOut</h1>
+        <p className="text-muted-foreground mb-8">Your safe space to be heard.</p>
 
-  if (loading) {
-    return (
-      <Layout>
-        <div className="flex flex-col items-center justify-center text-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
-          <p>Loading...</p>
-        </div>
-      </Layout>
-    );
-  }
+        <QuoteCard
+          quote={currentQuote.quote}
+          author={currentQuote.author}
+          onRefresh={handleRefreshQuote}
+        />
 
-  // Show auth prompt if user is not logged in
-  if (!user) {
-    return (
-      <Layout>
-        <div className="flex flex-col items-center justify-center text-center py-8">
-          <HealingAnimation />
-          <h1 className="text-4xl font-bold text-primary mb-2">VentOut</h1>
-          <p className="text-muted-foreground mb-8">Your safe space to be heard.</p>
+        <div className="w-full max-w-xs space-y-4 mb-6">
+          <Button 
+            size="lg" 
+            className="w-full py-3 text-lg bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl shadow-md"
+            onClick={handleStartTalking}
+          >
+            <MessageSquare className="mr-2 h-6 w-6" />
+            Start Talking
+          </Button>
+          <p className="text-xs text-muted-foreground mt-[-0.5rem] mb-2">Connect anonymously with a listener.</p>
           
-          <QuoteCard
-            quote={currentQuote.quote}
-            author={currentQuote.author}
-            onRefresh={handleRefreshQuote}
-          />
-
-          <div className="w-full max-w-xs space-y-4 mb-6">
-            <Button 
-              size="lg" 
-              className="w-full py-3 text-lg bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl shadow-md"
-              onClick={handleSignIn}
-            >
-              Get Started
-            </Button>
-            <p className="text-xs text-muted-foreground">Join our supportive community</p>
-          </div>
+          <Button 
+            size="lg" 
+            variant="outline"
+            className="w-full py-3 text-lg rounded-xl shadow-md relative"
+            disabled
+          >
+            <Video className="mr-2 h-6 w-6" />
+            Video Call
+            <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
+              Coming Soon
+            </span>
+          </Button>
         </div>
-      </Layout>
-    );
-  }
-
-  // Show talker interface if user is authenticated and is a talker
-  if (isTalker) {
-    return (
-      <Layout>
-        <div className="flex flex-col items-center justify-center text-center py-8">
-          <HealingAnimation />
-          <h1 className="text-4xl font-bold text-primary mb-2">VentOut</h1>
-          <p className="text-muted-foreground mb-8">Your safe space to be heard.</p>
-
-          <QuoteCard
-            quote={currentQuote.quote}
-            author={currentQuote.author}
-            onRefresh={handleRefreshQuote}
-          />
-
-          <div className="w-full max-w-xs space-y-4 mb-6">
-            <Button 
-              size="lg" 
-              className="w-full py-3 text-lg bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl shadow-md"
-              onClick={handleStartTalking}
-            >
-              <MessageSquare className="mr-2 h-6 w-6" />
-              Start Talking
-            </Button>
-            <p className="text-xs text-muted-foreground mt-[-0.5rem] mb-2">Connect anonymously with a listener.</p>
-            
-            <Button 
-              size="lg" 
-              variant="outline"
-              className="w-full py-3 text-lg rounded-xl shadow-md relative"
-              disabled
-            >
-              <Video className="mr-2 h-6 w-6" />
-              Video Call
-              <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
-                Coming Soon
-              </span>
-            </Button>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
-  return null; // This shouldn't happen with current logic
+      </div>
+    </Layout>
+  );
 };
 
 export default Index;

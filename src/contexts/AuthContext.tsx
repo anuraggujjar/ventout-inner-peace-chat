@@ -38,7 +38,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .single();
       
       if (error) throw error;
-      setProfile(data);
+      
+      // Type cast the role to ensure it matches our interface
+      const typedProfile: UserProfile = {
+        ...data,
+        role: data.role as 'talker' | 'listener'
+      };
+      
+      setProfile(typedProfile);
     } catch (error) {
       console.error('Error fetching profile:', error);
     }

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
@@ -6,6 +7,7 @@ import RoleSelector from '@/components/RoleSelector';
 import { Button } from '@/components/ui/button';
 import { MessageSquare, Video } from 'lucide-react';
 import { useUserRole } from '@/contexts/UserRoleContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const initialQuotes = [
   {
@@ -103,13 +105,22 @@ const Index = () => {
   const [currentQuote, setCurrentQuote] = useState(initialQuotes[0]);
   const navigate = useNavigate();
   const { userRole, isListener, isTalker } = useUserRole();
+  const { user, loading } = useAuth();
 
-  // Redirect listeners to their dashboard
+  // Redirect based on authentication and role
   useEffect(() => {
-    if (isListener) {
-      navigate('/listener-dashboard');
+    if (!loading) {
+      if (!user) {
+        // User not authenticated, they can see the landing page
+        return;
+      }
+      
+      if (isListener) {
+        navigate('/listener-dashboard');
+      }
+      // If talker, stay on this page
     }
-  }, [isListener, navigate]);
+  }, [user, loading, isListener, navigate]);
 
   const handleRefreshQuote = () => {
     const currentIndex = initialQuotes.findIndex(q => q.quote === currentQuote.quote);
@@ -123,21 +134,52 @@ const Index = () => {
     navigate('/topic-selection');
   };
 
-  // Show role selector if no role is selected
-  if (!userRole) {
+  const handleSignIn = () => {
+    navigate('/auth');
+  };
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex flex-col items-center justify-center text-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-4"></div>
+          <p>Loading...</p>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Show auth prompt if user is not logged in
+  if (!user) {
     return (
       <Layout>
         <div className="flex flex-col items-center justify-center text-center py-8">
           <HealingAnimation />
           <h1 className="text-4xl font-bold text-primary mb-2">VentOut</h1>
           <p className="text-muted-foreground mb-8">Your safe space to be heard.</p>
-          <RoleSelector />
+          
+          <QuoteCard
+            quote={currentQuote.quote}
+            author={currentQuote.author}
+            onRefresh={handleRefreshQuote}
+          />
+
+          <div className="w-full max-w-xs space-y-4 mb-6">
+            <Button 
+              size="lg" 
+              className="w-full py-3 text-lg bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl shadow-md"
+              onClick={handleSignIn}
+            >
+              Get Started
+            </Button>
+            <p className="text-xs text-muted-foreground">Join our supportive community</p>
+          </div>
         </div>
       </Layout>
     );
   }
 
-  // Show talker interface if talker role is selected
+  // Show talker interface if user is authenticated and is a talker
   if (isTalker) {
     return (
       <Layout>

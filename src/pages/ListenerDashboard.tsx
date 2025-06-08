@@ -5,11 +5,11 @@ import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Headphones, MessageSquare, Users, Clock, Heart } from 'lucide-react';
-import { useUserRole } from '@/contexts/UserRoleContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const ListenerDashboard = () => {
   const navigate = useNavigate();
-  const { setUserRole } = useUserRole();
+  const { signOut } = useAuth();
 
   const handleBeListener = () => {
     console.log("Navigating to Listener Queue");
@@ -18,12 +18,11 @@ const ListenerDashboard = () => {
 
   const handleStartTalking = () => {
     console.log("Switching to Talker mode");
-    setUserRole('talker');
     navigate('/topic-selection');
   };
 
-  const handleBackToRoleSelection = () => {
-    setUserRole(null);
+  const handleSignOut = async () => {
+    await signOut();
     navigate('/');
   };
 
@@ -93,7 +92,7 @@ const ListenerDashboard = () => {
                 Start Listening
               </Button>
               <p className="text-xs text-muted-foreground mt-2 text-center">
-                3 people currently waiting for support
+                Real-time queue with waiting users
               </p>
             </CardContent>
           </Card>
@@ -128,10 +127,10 @@ const ListenerDashboard = () => {
         <div className="text-center">
           <Button 
             variant="outline" 
-            onClick={handleBackToRoleSelection}
+            onClick={handleSignOut}
             className="mt-4"
           >
-            Back to Role Selection
+            Sign Out
           </Button>
         </div>
       </div>

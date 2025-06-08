@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -12,42 +12,79 @@ import { useToast } from '@/hooks/use-toast';
 import Layout from '@/components/Layout';
 
 const AuthPage = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('test@example.com');
+  const [password, setPassword] = useState('password123');
   const [role, setRole] = useState<'talker' | 'listener'>('talker');
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (user) {
+      console.log('User already authenticated, redirecting');
+      navigate('/');
+    }
+  }, [user, navigate]);
+
   const handleSignIn = async () => {
+    if (!email || !password) {
+      toast({
+        variant: "destructive",
+        title: "Missing Information",
+        description: "Please enter both email and password"
+      });
+      return;
+    }
+
     setLoading(true);
+    console.log('Signing in with:', email);
+    
     const { error } = await signIn(email, password);
     
     if (error) {
+      console.error('Sign in failed:', error);
       toast({
         variant: "destructive",
         title: "Error signing in",
-        description: error.message
+        description: error.message || "Failed to sign in. Please check your credentials."
+      });
+    } else {
+      toast({
+        title: "Welcome back!",
+        description: "You have been signed in successfully."
       });
     }
     setLoading(false);
   };
 
   const handleSignUp = async () => {
+    if (!email || !password) {
+      toast({
+        variant: "destructive",
+        title: "Missing Information",
+        description: "Please enter both email and password"
+      });
+      return;
+    }
+
     setLoading(true);
+    console.log('Signing up with:', email, 'as', role);
+    
     const { error } = await signUp(email, password, role);
     
     if (error) {
+      console.error('Sign up failed:', error);
       toast({
         variant: "destructive",
-        title: "Error signing up",
-        description: error.message
+        title: "Error creating account",
+        description: error.message || "Failed to create account. Please try again."
       });
     } else {
       toast({
         title: "Account created!",
-        description: "Please check your email to verify your account."
+        description: "Your account has been created successfully."
       });
     }
     setLoading(false);
@@ -94,6 +131,11 @@ const AuthPage = () => {
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Enter your password"
                     />
+                  </div>
+                  <div className="text-sm text-muted-foreground bg-blue-50 p-3 rounded">
+                    <strong>Test Credentials:</strong><br />
+                    Email: test@example.com<br />
+                    Password: password123
                   </div>
                   <Button 
                     onClick={handleSignIn} 

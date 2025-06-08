@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { SecurityProvider } from "@/contexts/SecurityContext";
+import { UserRoleProvider } from "@/contexts/UserRoleContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import ChatPage from "./pages/ChatPage";
@@ -14,6 +15,8 @@ import HistoryPage from "./pages/HistoryPage";
 import TopicSelectionPage from "./pages/TopicSelectionPage";
 import FeelingSelectionPage from "./pages/FeelingSelectionPage";
 import ChatRequestSentPage from "./pages/ChatRequestSentPage";
+import ListenerDashboard from "./pages/ListenerDashboard";
+import ListenerQueue from "./pages/ListenerQueue";
 import './App.css';
 
 const queryClient = new QueryClient();
@@ -22,23 +25,27 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <SecurityProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/chat" element={<ChatPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/history" element={<HistoryPage />} />
-              <Route path="/topic-selection" element={<TopicSelectionPage />} />
-              <Route path="/feeling-selection" element={<FeelingSelectionPage />} />
-              <Route path="/chat-request-sent" element={<ChatRequestSentPage />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
+        <UserRoleProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/chat" element={<ChatPage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/history" element={<HistoryPage />} />
+                <Route path="/topic-selection" element={<TopicSelectionPage />} />
+                <Route path="/feeling-selection" element={<FeelingSelectionPage />} />
+                <Route path="/chat-request-sent" element={<ChatRequestSentPage />} />
+                <Route path="/listener-dashboard" element={<ListenerDashboard />} />
+                <Route path="/listener-queue" element={<ListenerQueue />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </UserRoleProvider>
       </SecurityProvider>
     </ThemeProvider>
   </QueryClientProvider>

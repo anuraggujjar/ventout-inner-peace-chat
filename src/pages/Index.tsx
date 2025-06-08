@@ -1,12 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import QuoteCard from '@/components/QuoteCard';
-import RoleSelector from '@/components/RoleSelector';
 import { Button } from '@/components/ui/button';
 import { MessageSquare, Video } from 'lucide-react';
-import { useUserRole } from '@/contexts/UserRoleContext';
 
 const initialQuotes = [
   {
@@ -103,7 +100,6 @@ const HealingAnimation = () => {
 const Index = () => {
   const [currentQuote, setCurrentQuote] = useState(initialQuotes[0]);
   const navigate = useNavigate();
-  const { userRole, isListener } = useUserRole();
 
   const handleRefreshQuote = () => {
     const currentIndex = initialQuotes.findIndex(q => q.quote === currentQuote.quote);
@@ -116,13 +112,6 @@ const Index = () => {
     console.log("Start Talking clicked");
     navigate('/topic-selection');
   };
-
-  // Redirect listeners to their dashboard
-  useEffect(() => {
-    if (isListener) {
-      navigate('/listener-dashboard');
-    }
-  }, [isListener, navigate]);
 
   return (
     <Layout>
@@ -137,34 +126,30 @@ const Index = () => {
           onRefresh={handleRefreshQuote}
         />
 
-        {!userRole ? (
-          <RoleSelector />
-        ) : (
-          <div className="w-full max-w-xs space-y-4 mb-6">
-            <Button 
-              size="lg" 
-              className="w-full py-3 text-lg bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl shadow-md"
-              onClick={handleStartTalking}
-            >
-              <MessageSquare className="mr-2 h-6 w-6" />
-              Start Talking
-            </Button>
-            <p className="text-xs text-muted-foreground mt-[-0.5rem] mb-2">Connect anonymously with a listener.</p>
-            
-            <Button 
-              size="lg" 
-              variant="outline"
-              className="w-full py-3 text-lg rounded-xl shadow-md relative"
-              disabled
-            >
-              <Video className="mr-2 h-6 w-6" />
-              Video Call
-              <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
-                Coming Soon
-              </span>
-            </Button>
-          </div>
-        )}
+        <div className="w-full max-w-xs space-y-4 mb-6">
+          <Button 
+            size="lg" 
+            className="w-full py-3 text-lg bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl shadow-md"
+            onClick={handleStartTalking}
+          >
+            <MessageSquare className="mr-2 h-6 w-6" />
+            Start Talking
+          </Button>
+          <p className="text-xs text-muted-foreground mt-[-0.5rem] mb-2">Connect anonymously with a listener.</p>
+          
+          <Button 
+            size="lg" 
+            variant="outline"
+            className="w-full py-3 text-lg rounded-xl shadow-md relative"
+            disabled
+          >
+            <Video className="mr-2 h-6 w-6" />
+            Video Call
+            <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
+              Coming Soon
+            </span>
+          </Button>
+        </div>
       </div>
     </Layout>
   );

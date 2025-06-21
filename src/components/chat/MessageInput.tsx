@@ -1,12 +1,14 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Send, XCircle, ShieldAlert } from 'lucide-react';
+import { Send, XCircle, ShieldAlert, Mic } from 'lucide-react';
+import VoiceRecorder from './VoiceRecorder';
 
 interface MessageInputProps {
   message: string;
   setMessage: (message: string) => void;
   onSendMessage: () => void;
+  onSendVoiceMessage: (audioData: string, duration: number) => void;
   onEndChat: () => void;
   onReport: () => void;
   connectionStatus: 'connecting' | 'connected' | 'disconnected';
@@ -16,10 +18,18 @@ const MessageInput = ({
   message, 
   setMessage, 
   onSendMessage, 
+  onSendVoiceMessage,
   onEndChat, 
   onReport, 
   connectionStatus 
 }: MessageInputProps) => {
+  const [showVoiceRecorder, setShowVoiceRecorder] = useState(false);
+
+  const handleVoiceMessage = (audioData: string, duration: number) => {
+    onSendVoiceMessage(audioData, duration);
+    setShowVoiceRecorder(false);
+  };
+
   return (
     <>
       <div className="border-t border-border/50 p-4 bg-card">
@@ -34,6 +44,15 @@ const MessageInput = ({
               className="flex-1 px-4 py-2 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
               disabled={connectionStatus !== 'connected'}
             />
+            <Button 
+              onClick={() => setShowVoiceRecorder(true)}
+              size="icon"
+              variant="outline"
+              disabled={connectionStatus !== 'connected'}
+              className="hover:scale-105 transition-transform duration-200"
+            >
+              <Mic size={16} />
+            </Button>
             <Button 
               onClick={onSendMessage}
               size="icon"
@@ -61,6 +80,12 @@ const MessageInput = ({
           This conversation is anonymous and confidential. You are chatting with a real person.
         </p>
       </div>
+
+      <VoiceRecorder 
+        isOpen={showVoiceRecorder}
+        onClose={() => setShowVoiceRecorder(false)}
+        onSendVoiceMessage={handleVoiceMessage}
+      />
     </>
   );
 };

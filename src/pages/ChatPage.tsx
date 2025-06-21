@@ -8,13 +8,7 @@ import MessageInput from '@/components/chat/MessageInput';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { sanitizeInput } from '@/utils/privacy';
-
-interface Message {
-  id: string;
-  sender: 'listener' | 'talker';
-  content: string;
-  timestamp: Date;
-}
+import { Message } from '@/types/message';
 
 const ChatPage = () => {
   const navigate = useNavigate();
@@ -71,7 +65,8 @@ const ChatPage = () => {
         content: role === 'listener' 
           ? "Hi! I'm here and ready to talk. Thank you for being willing to listen."
           : "Hello! I'm here to listen. Feel free to share whatever is on your mind - this is a safe space.",
-        timestamp: new Date()
+        timestamp: new Date(),
+        type: 'text'
       };
       setMessages([welcomeMessage]);
       
@@ -103,7 +98,8 @@ const ChatPage = () => {
         id: Date.now().toString(),
         sender: userRole,
         content: sanitizedMessage,
-        timestamp: new Date()
+        timestamp: new Date(),
+        type: 'text'
       };
 
       setMessages(prev => [...prev, newMessage]);
@@ -117,6 +113,35 @@ const ChatPage = () => {
         setPartnerTyping(true);
         setTimeout(() => setPartnerTyping(false), 2000 + Math.random() * 3000);
       }
+    }
+  };
+
+  const handleSendVoiceMessage = (audioData: string, duration: number) => {
+    if (connectionStatus === 'connected') {
+      const newMessage: Message = {
+        id: Date.now().toString(),
+        sender: userRole,
+        content: '', // Voice messages don't need text content
+        timestamp: new Date(),
+        type: 'voice',
+        audioData,
+        duration
+      };
+
+      setMessages(prev => [...prev, newMessage]);
+
+      // In a real implementation, you would send this voice message through WebSocket
+      console.log('Sending voice message:', { 
+        id: newMessage.id, 
+        sender: newMessage.sender, 
+        duration: newMessage.duration,
+        audioDataLength: audioData.length 
+      });
+      
+      toast({
+        title: "Voice message sent",
+        description: "Your voice message has been delivered.",
+      });
     }
   };
 
@@ -183,6 +208,7 @@ const ChatPage = () => {
           message={message}
           setMessage={setMessage}
           onSendMessage={handleSendMessage}
+          onSendVoiceMessage={handleSendVoiceMessage}
           onEndChat={handleEndChat}
           onReport={handleReport}
           connectionStatus={connectionStatus}

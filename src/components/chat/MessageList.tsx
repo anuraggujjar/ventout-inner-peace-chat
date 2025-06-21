@@ -2,13 +2,8 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Heart, MessageCircle } from 'lucide-react';
-
-interface Message {
-  id: string;
-  sender: 'listener' | 'talker';
-  content: string;
-  timestamp: Date;
-}
+import AudioMessage from './AudioMessage';
+import { Message } from '@/types/message';
 
 interface MessageListProps {
   messages: Message[];
@@ -62,11 +57,21 @@ const MessageList = ({ messages, userRole, partnerTyping, messagesEndRef }: Mess
                     }`}>
                       {isCurrentUser ? 'You' : `Anonymous ${getRoleDisplay(msg.sender)}`}
                     </p>
-                    <p className={`text-sm ${
-                      isCurrentUser ? 'text-primary-foreground' : 'text-foreground'
-                    }`}>
-                      {msg.content}
-                    </p>
+                    
+                    {msg.type === 'voice' && msg.audioData && msg.duration ? (
+                      <AudioMessage 
+                        audioData={msg.audioData}
+                        duration={msg.duration}
+                        isCurrentUser={isCurrentUser}
+                      />
+                    ) : (
+                      <p className={`text-sm ${
+                        isCurrentUser ? 'text-primary-foreground' : 'text-foreground'
+                      }`}>
+                        {msg.content}
+                      </p>
+                    )}
+                    
                     <p className={`text-xs mt-2 ${
                       isCurrentUser ? 'text-primary-foreground/70' : 'text-muted-foreground'
                     }`}>

@@ -5,24 +5,24 @@
 
 @layer base {
   :root {
-    --background: 45 20% 94%; /* Warmer off-white background */
+    --background: 45 35% 88%; /* Warm beige background */
     --foreground: 222.2 84% 4.9%;
-    --card: 45 20% 94%; /* Warmer off-white for cards too */
+    --card: 45 35% 90%; /* Slightly lighter beige for cards */
     --card-foreground: 222.2 84% 4.9%;
-    --popover: 45 20% 94%; /* Warmer off-white for popovers */
+    --popover: 45 35% 90%; /* Beige for popovers */
     --popover-foreground: 222.2 84% 4.9%;
     --primary: 200 90% 50%; /* Soft Blue */
     --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
+    --secondary: 45 30% 92%; /* Light beige for secondary elements */
     --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
+    --muted: 45 25% 85%; /* Muted beige */
     --muted-foreground: 215.4 16.3% 46.9%;
     --accent: 250 70% 70%; /* Soft Lavender/Teal like color for accents */
     --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
+    --border: 45 30% 80%; /* Beige border */
+    --input: 45 30% 85%; /* Beige input background */
     --ring: 222.2 84% 4.9%;
     --radius: 0.75rem; /* Slightly larger radius for softer cards */
     /* ... keep existing sidebar vars ... */

@@ -5,11 +5,11 @@
 
 @layer base {
   :root {
-    --background: 45 20% 94%; /* Warmer off-white background */
+    --background: 0 0% 97%; /* Neutral off-white background */
     --foreground: 222.2 84% 4.9%;
-    --card: 45 20% 94%; /* Warmer off-white for cards too */
+    --card: 0 0% 98%; /* Slightly whiter off-white for cards */
     --card-foreground: 222.2 84% 4.9%;
-    --popover: 45 20% 94%; /* Warmer off-white for popovers */
+    --popover: 0 0% 98%; /* Slightly whiter off-white for popovers */
     --popover-foreground: 222.2 84% 4.9%;
     --primary: 200 90% 50%; /* Soft Blue */
     --primary-foreground: 210 40% 98%;

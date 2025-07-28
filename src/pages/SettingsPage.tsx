@@ -90,92 +90,6 @@ const SettingsPage = () => {
           <p className="text-muted-foreground">Manage your profile, privacy and preferences</p>
         </div>
 
-        {/* User Profile */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <User className="h-5 w-5" />
-                <span>User Profile</span>
-              </div>
-              {!isEditingProfile && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsEditingProfile(true)}
-                >
-                  <Edit3 className="h-4 w-4 mr-2" />
-                  Edit
-                </Button>
-              )}
-            </CardTitle>
-            <CardDescription>Your profile information and bio</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {isEditingProfile ? (
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="display-name">Display Name</Label>
-                  <Input
-                    id="display-name"
-                    value={tempDisplayName}
-                    onChange={(e) => setTempDisplayName(e.target.value)}
-                    placeholder="Enter your display name"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="bio">Bio</Label>
-                  <Textarea
-                    id="bio"
-                    value={tempBio}
-                    onChange={(e) => setTempBio(e.target.value)}
-                    placeholder="Tell us about yourself..."
-                    className="min-h-[100px] resize-none"
-                    maxLength={500}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {tempBio.length}/500 characters
-                  </p>
-                </div>
-                <div className="flex space-x-2">
-                  <Button onClick={handleSaveProfile} size="sm">
-                    <Save className="h-4 w-4 mr-2" />
-                    Save
-                  </Button>
-                  <Button variant="outline" onClick={handleCancelEdit} size="sm">
-                    <X className="h-4 w-4 mr-2" />
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div>
-                  <p className="font-medium text-foreground">{displayName}</p>
-                  <p className="text-sm text-muted-foreground">Display Name</p>
-                </div>
-                <div>
-                  <p className="text-sm text-foreground mb-2">{bio}</p>
-                  <p className="text-xs text-muted-foreground">Bio</p>
-                </div>
-                <div className="grid grid-cols-2 gap-4 pt-2">
-                  <div>
-                    <p className="text-sm font-medium">Session ID</p>
-                    <p className="text-xs text-muted-foreground font-mono">
-                      {sessionId.slice(-12)}...
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Member Since</p>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date().toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
         {/* Security Status */}
         <Card>
@@ -238,23 +152,6 @@ const SettingsPage = () => {
               />
             </div>
 
-            <Separator />
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="analytics">Anonymous Analytics</Label>
-                <p className="text-sm text-muted-foreground">
-                  Help improve Sola with anonymous usage data
-                </p>
-              </div>
-              <Switch
-                id="analytics"
-                checked={analytics}
-                onCheckedChange={setAnalytics}
-              />
-            </div>
-
-            <Separator />
 
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">

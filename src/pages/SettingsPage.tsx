@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
-import { Shield, Bell, Eye, Trash2, Download, User, Edit3, Save, X } from 'lucide-react';
+import { Shield, Bell, Eye, Trash2, User, Edit3, Save, X } from 'lucide-react';
 import { useSecurity } from '@/contexts/SecurityContext';
 import { useToast } from '@/hooks/use-toast';
 
@@ -34,37 +34,6 @@ const SettingsPage = () => {
     });
   };
 
-  const handleExportData = () => {
-    const data = {
-      sessionId,
-      userProfile: {
-        displayName,
-        bio,
-        joinDate: new Date().toISOString()
-      },
-      preferences: {
-        notifications,
-        analytics,
-        autoDelete
-      },
-      exportDate: new Date().toISOString()
-    };
-    
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `ventout-data-export-${Date.now()}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-
-    toast({
-      title: "Data Exported",
-      description: "Your data has been downloaded successfully.",
-    });
-  };
 
   const handleSaveProfile = () => {
     setDisplayName(tempDisplayName);
@@ -179,24 +148,14 @@ const SettingsPage = () => {
             <CardDescription>Manage your stored data and chat history</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button 
-                variant="outline" 
-                onClick={handleExportData}
-                className="flex-1"
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Export Data
-              </Button>
-              <Button 
-                variant="destructive" 
-                onClick={handleClearData}
-                className="flex-1"
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Clear All Data
-              </Button>
-            </div>
+            <Button 
+              variant="destructive" 
+              onClick={handleClearData}
+              className="w-full"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Clear All Data
+            </Button>
             <p className="text-xs text-muted-foreground">
               Clearing data will remove all chat history and preferences from this device.
             </p>

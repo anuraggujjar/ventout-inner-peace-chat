@@ -148,10 +148,10 @@ const VoiceRecorder = ({ isOpen, onClose, onSendVoiceMessage }: VoiceRecorderPro
         
         <div className="flex flex-col items-center space-y-6 py-4">
           {/* Recording Animation */}
-          <div className={`w-24 h-24 rounded-full flex items-center justify-center transition-all duration-300 ${
-            isRecording ? 'bg-red-500 animate-pulse' : 'bg-primary'
+          <div className={`rounded-full flex items-center justify-center transition-all duration-300 ${
+            isRecording ? 'w-12 h-12 bg-red-500 animate-pulse' : 'w-24 h-24 bg-primary'
           }`}>
-            <Mic className="w-10 h-10 text-white" />
+            <Mic className={`text-white ${isRecording ? 'w-5 h-5' : 'w-10 h-10'}`} />
           </div>
           
           {/* Timer */}

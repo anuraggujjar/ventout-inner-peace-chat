@@ -44,15 +44,23 @@ const MessageInput = ({
               className="flex-1 px-4 py-2 rounded-lg border border-input bg-background focus:outline-none focus:ring-2 focus:ring-ring"
               disabled={connectionStatus !== 'connected'}
             />
-            <Button 
-              onClick={() => setShowVoiceRecorder(true)}
-              size="icon"
-              variant="outline"
-              disabled={connectionStatus !== 'connected'}
-              className="hover:scale-105 transition-transform duration-200"
-            >
-              <Mic size={16} />
-            </Button>
+            {!showVoiceRecorder ? (
+              <Button 
+                onClick={() => setShowVoiceRecorder(true)}
+                size="icon"
+                variant="outline"
+                disabled={connectionStatus !== 'connected'}
+                className="hover:scale-105 transition-transform duration-200"
+              >
+                <Mic size={16} />
+              </Button>
+            ) : (
+              <VoiceRecorder 
+                isOpen={showVoiceRecorder}
+                onClose={() => setShowVoiceRecorder(false)}
+                onSendVoiceMessage={handleVoiceMessage}
+              />
+            )}
             <Button 
               onClick={onSendMessage}
               size="icon"
@@ -81,11 +89,6 @@ const MessageInput = ({
         </p>
       </div>
 
-      <VoiceRecorder 
-        isOpen={showVoiceRecorder}
-        onClose={() => setShowVoiceRecorder(false)}
-        onSendVoiceMessage={handleVoiceMessage}
-      />
     </>
   );
 };

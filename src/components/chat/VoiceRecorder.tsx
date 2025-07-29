@@ -1,8 +1,6 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Mic, MicOff, Square, Play, Pause, Send, X } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Mic, Square, Play, Pause, Send, X } from 'lucide-react';
 
 interface VoiceRecorderProps {
   isOpen: boolean;
@@ -21,6 +19,12 @@ const VoiceRecorder = ({ isOpen, onClose, onSendVoiceMessage }: VoiceRecorderPro
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const intervalRef = useRef<number | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+
+  useEffect(() => {
+    if (isOpen && !isRecording && !recordedAudio) {
+      startRecording();
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     return () => {
@@ -139,63 +143,56 @@ const VoiceRecorder = ({ isOpen, onClose, onSendVoiceMessage }: VoiceRecorderPro
     setCurrentTime(0);
   };
 
+  if (!isOpen) return null;
+
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Record Voice Message</DialogTitle>
-        </DialogHeader>
-        
-        <div className="flex flex-col items-center space-y-6 py-4">
-          {/* Recording Animation */}
-          <div className={`rounded-full flex items-center justify-center transition-all duration-300 ${
-            isRecording ? 'w-12 h-12 bg-red-500 animate-pulse' : 'w-24 h-24 bg-primary'
-          }`}>
-            <Mic className={`text-white ${isRecording ? 'w-5 h-5' : 'w-10 h-10'}`} />
-          </div>
-          
-          {/* Timer */}
-          <div className="text-2xl font-mono font-bold">
-            {formatTime(isRecording ? currentTime : duration)}
-          </div>
-          
-          {/* Controls */}
-          <div className="flex space-x-4">
-            {!recordedAudio ? (
-              <>
-                {!isRecording ? (
-                  <Button onClick={startRecording} size="lg" className="rounded-full">
-                    <Mic className="w-5 h-5" />
-                  </Button>
-                ) : (
-                  <Button onClick={stopRecording} variant="destructive" size="lg" className="rounded-full">
-                    <Square className="w-5 h-5" />
-                  </Button>
-                )}
-              </>
-            ) : (
-              <>
-                <Button onClick={playRecording} variant="outline" size="lg" className="rounded-full">
-                  {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-                </Button>
-                <Button onClick={resetRecording} variant="outline" size="lg" className="rounded-full">
-                  <X className="w-5 h-5" />
-                </Button>
-                <Button onClick={handleSend} size="lg" className="rounded-full">
-                  <Send className="w-5 h-5" />
-                </Button>
-              </>
-            )}
-          </div>
-          
-          {recordedAudio && (
-            <p className="text-sm text-muted-foreground text-center">
-              Preview your recording and tap send to share it
-            </p>
-          )}
+    <div className="flex items-center space-x-2">
+      {/* Recording indicator */}
+      {isRecording && (
+        <div className="flex items-center space-x-2">
+          <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+          <span className="text-sm font-mono text-muted-foreground">
+            {formatTime(currentTime)}
+          </span>
         </div>
-      </DialogContent>
-    </Dialog>
+      )}
+      
+      {/* Controls */}
+      {!recordedAudio ? (
+        <>
+          {isRecording ? (
+            <Button onClick={stopRecording} variant="destructive" size="icon" className="rounded-full">
+              <Square className="w-4 h-4" />
+            </Button>
+          ) : (
+            <Button onClick={startRecording} size="icon" className="rounded-full">
+              <Mic className="w-4 h-4" />
+            </Button>
+          )}
+        </>
+      ) : (
+        <>
+          <span className="text-sm font-mono text-muted-foreground">
+            {formatTime(duration)}
+          </span>
+          <Button onClick={playRecording} variant="outline" size="icon" className="rounded-full">
+            {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+          </Button>
+          <Button onClick={resetRecording} variant="outline" size="icon" className="rounded-full">
+            <X className="w-4 h-4" />
+          </Button>
+          <Button onClick={handleSend} size="icon" className="rounded-full">
+            <Send className="w-4 h-4" />
+          </Button>
+        </>
+      )}
+      
+      {!isRecording && !recordedAudio && (
+        <Button onClick={handleClose} variant="ghost" size="icon">
+          <X className="w-4 h-4" />
+        </Button>
+      )}
+    </div>
   );
 };
 

@@ -39,18 +39,8 @@ const LoginPage = () => {
     }
   };
 
-  const handleGoogleLogin = async () => {
-    // TEMPORARY: Bypass Google auth and simulate successful login
-    setLoading(true);
-    setError('');
-
-    try {
-      await login('google.user@example.com', 'google-auth');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Google login failed');
-    } finally {
-      setLoading(false);
-    }
+  const handleGoogleLogin = () => {
+    window.location.href = 'http://localhost:3000/auth/google';
   };
 
   return (

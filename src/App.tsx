@@ -4,11 +4,10 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { SecurityProvider } from "@/contexts/SecurityContext";
 import { AuthProvider } from "@/hooks/useAuth";
-import { SocketProvider } from "@/hooks/useSocket";
 import { SplashScreen } from "@/components/SplashScreen";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -45,8 +44,8 @@ const App = () => {
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            <AuthProvider>
-              <SocketProvider>
+            <BrowserRouter>
+              <AuthProvider>
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/login" element={<LoginPage />} />
@@ -63,8 +62,8 @@ const App = () => {
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
-              </SocketProvider>
-            </AuthProvider>
+              </AuthProvider>
+            </BrowserRouter>
           </TooltipProvider>
         </SecurityProvider>
       </ThemeProvider>

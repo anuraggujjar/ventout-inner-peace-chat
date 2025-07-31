@@ -2,15 +2,9 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Headphones, LogOut, Users } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 const ListenerHomePage = () => {
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
-
-  const handleStartListening = () => {
-    navigate('/chat');
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -42,7 +36,7 @@ const ListenerHomePage = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full" onClick={handleStartListening}>Start Listening</Button>
+              <Button className="w-full">Start Listening</Button>
             </CardContent>
           </Card>
 

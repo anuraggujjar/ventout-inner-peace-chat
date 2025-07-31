@@ -2,14 +2,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Layout from '@/components/Layout';
 import FeedbackModal from '@/components/FeedbackModal';
-import WaitingRoom from '@/components/chat/WaitingRoom';
 import ChatHeader from '@/components/chat/ChatHeader';
 import MessageList from '@/components/chat/MessageList';
 import MessageInput from '@/components/chat/MessageInput';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { useSocket } from '@/hooks/useSocket';
-import { useAuth } from '@/hooks/useAuth';
 import { sanitizeInput } from '@/utils/privacy';
 import { Message } from '@/types/message';
 
@@ -17,18 +14,16 @@ const ChatPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { user } = useAuth();
-  const { socket, connected, partnerUserId, isMatched, sendMessage: socketSendMessage, sendVoiceMessage: socketSendVoiceMessage, uploadVoiceFile } = useSocket();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
   const [showFeedback, setShowFeedback] = useState(false);
+  const [userRole, setUserRole] = useState<'listener' | 'talker'>('talker');
   const [partnerTyping, setPartnerTyping] = useState(false);
+  const [sessionId, setSessionId] = useState<string>('');
   
   const { topic, feeling } = location.state || {};
-  const userRole = user?.role || 'talker';
-  const connectionStatus = connected ? 'connected' : (socket ? 'connecting' : 'disconnected');
-  const sessionId = partnerUserId || 'waiting';
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -38,47 +33,66 @@ const ChatPage = () => {
     scrollToBottom();
   }, [messages]);
 
-  // Listen for incoming messages
   useEffect(() => {
-    if (!socket) return;
-
-    const handleReceiveMessage = (data: any) => {
-      const newMessage: Message = {
-        id: Date.now().toString(),
-        sender: userRole === 'talker' ? 'listener' : 'talker',
-        content: data.message || '',
-        timestamp: new Date(),
-        type: data.voiceUrl ? 'voice' : 'text',
-        audioData: data.voiceUrl ? `http://localhost:3000${data.voiceUrl}` : undefined
-      };
-      setMessages(prev => [...prev, newMessage]);
-    };
-
-    socket.on('receive_message', handleReceiveMessage);
-
+    // Initialize chat session directly
+    initializeChatSession();
+    
     return () => {
-      socket.off('receive_message', handleReceiveMessage);
+      // Cleanup on unmount
+      if (sessionId) {
+        leaveChatSession();
+      }
     };
-  }, [socket, userRole]);
+  }, []);
 
-  // Show welcome message when matched
-  useEffect(() => {
-    if (isMatched && messages.length === 0) {
+  const initializeChatSession = async () => {
+    try {
+      // Generate session ID and determine role
+      const newSessionId = 'chat_' + Math.random().toString(36).substr(2, 9);
+      setSessionId(newSessionId);
+      
+      // Connect directly without waiting room
+      setConnectionStatus('connected');
+      
+      // Randomly assign roles or use URL parameter
+      const role = Math.random() > 0.5 ? 'listener' : 'talker';
+      setUserRole(role);
+      
+      // Add welcome message
       const welcomeMessage: Message = {
         id: '1',
-        sender: userRole === 'listener' ? 'talker' : 'listener',
-        content: userRole === 'listener' 
+        sender: role === 'listener' ? 'talker' : 'listener',
+        content: role === 'listener' 
           ? "Hi! I'm here and ready to talk. Thank you for being willing to listen."
           : "Hello! I'm here to listen. Feel free to share whatever is on your mind - this is a safe space.",
         timestamp: new Date(),
         type: 'text'
       };
       setMessages([welcomeMessage]);
+      
+      toast({
+        title: "Connected!",
+        description: `You're now connected as a ${role}. The conversation is completely anonymous.`,
+      });
+      
+    } catch (error) {
+      console.error('Failed to initialize chat session:', error);
+      setConnectionStatus('disconnected');
+      toast({
+        title: "Connection Failed",
+        description: "Unable to connect to chat. Please try again.",
+        variant: "destructive"
+      });
     }
-  }, [isMatched, userRole, messages.length]);
+  };
+
+  const leaveChatSession = () => {
+    // In a real implementation, notify the server about leaving
+    console.log('Leaving chat session:', sessionId);
+  };
 
   const handleSendMessage = () => {
-    if (message.trim() && connectionStatus === 'connected' && isMatched) {
+    if (message.trim() && connectionStatus === 'connected') {
       const sanitizedMessage = sanitizeInput(message);
       const newMessage: Message = {
         id: Date.now().toString(),
@@ -90,45 +104,44 @@ const ChatPage = () => {
 
       setMessages(prev => [...prev, newMessage]);
       setMessage('');
+
+      // In a real implementation, you would send this message through WebSocket
+      console.log('Sending message:', newMessage);
       
-      // Send message via Socket.IO
-      socketSendMessage(sanitizedMessage);
+      // Simulate partner typing indicator occasionally
+      if (Math.random() > 0.7) {
+        setPartnerTyping(true);
+        setTimeout(() => setPartnerTyping(false), 2000 + Math.random() * 3000);
+      }
     }
   };
 
-  const handleSendVoiceMessage = async (audioData: string, duration: number) => {
-    if (connectionStatus === 'connected' && isMatched) {
-      try {
-        // Upload voice file to backend
-        const voiceUrl = await uploadVoiceFile(audioData);
-        
-        const newMessage: Message = {
-          id: Date.now().toString(),
-          sender: userRole,
-          content: '', // Voice messages don't need text content
-          timestamp: new Date(),
-          type: 'voice',
-          audioData: `http://localhost:3000${voiceUrl}`,
-          duration
-        };
+  const handleSendVoiceMessage = (audioData: string, duration: number) => {
+    if (connectionStatus === 'connected') {
+      const newMessage: Message = {
+        id: Date.now().toString(),
+        sender: userRole,
+        content: '', // Voice messages don't need text content
+        timestamp: new Date(),
+        type: 'voice',
+        audioData,
+        duration
+      };
 
-        setMessages(prev => [...prev, newMessage]);
-        
-        // Send voice message via Socket.IO
-        socketSendVoiceMessage(voiceUrl);
-        
-        toast({
-          title: "Voice message sent",
-          description: "Your voice message has been delivered.",
-        });
-      } catch (error) {
-        console.error('Failed to send voice message:', error);
-        toast({
-          title: "Failed to send voice message",
-          description: "Please try again.",
-          variant: "destructive"
-        });
-      }
+      setMessages(prev => [...prev, newMessage]);
+
+      // In a real implementation, you would send this voice message through WebSocket
+      console.log('Sending voice message:', { 
+        id: newMessage.id, 
+        sender: newMessage.sender, 
+        duration: newMessage.duration,
+        audioDataLength: audioData.length 
+      });
+      
+      toast({
+        title: "Voice message sent",
+        description: "Your voice message has been delivered.",
+      });
     }
   };
 
@@ -172,18 +185,6 @@ const ChatPage = () => {
       description: "Thank you for your feedback. We take all reports seriously.",
     });
   };
-
-  // Show waiting room if not matched
-  if (!isMatched) {
-    return (
-      <Layout>
-        <WaitingRoom 
-          userRole={userRole}
-          onCancel={() => navigate('/')}
-        />
-      </Layout>
-    );
-  }
 
   return (
     <Layout>

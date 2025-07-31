@@ -7,6 +7,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { SecurityProvider } from "@/contexts/SecurityContext";
+import { AuthProvider } from "@/hooks/useAuth";
+import { SocketProvider } from "@/hooks/useSocket";
 import { SplashScreen } from "@/components/SplashScreen";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -43,22 +45,26 @@ const App = () => {
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/post-auth" element={<PostAuthPage />} />
-              <Route path="/select-role" element={<SelectRolePage />} />
-              <Route path="/talker/home" element={<TalkerHomePage />} />
-              <Route path="/listener/home" element={<ListenerHomePage />} />
-              <Route path="/chat" element={<ChatPage />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/history" element={<HistoryPage />} />
-              <Route path="/topic-selection" element={<TopicSelectionPage />} />
-              <Route path="/feeling-selection" element={<FeelingSelectionPage />} />
-              <Route path="/chat-request-sent" element={<ChatRequestSentPage />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+            <AuthProvider>
+              <SocketProvider>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/post-auth" element={<PostAuthPage />} />
+                  <Route path="/select-role" element={<SelectRolePage />} />
+                  <Route path="/talker/home" element={<TalkerHomePage />} />
+                  <Route path="/listener/home" element={<ListenerHomePage />} />
+                  <Route path="/chat" element={<ChatPage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/history" element={<HistoryPage />} />
+                  <Route path="/topic-selection" element={<TopicSelectionPage />} />
+                  <Route path="/feeling-selection" element={<FeelingSelectionPage />} />
+                  <Route path="/chat-request-sent" element={<ChatRequestSentPage />} />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </SocketProvider>
+            </AuthProvider>
           </TooltipProvider>
         </SecurityProvider>
       </ThemeProvider>

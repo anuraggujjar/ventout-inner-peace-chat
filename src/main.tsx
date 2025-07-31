@@ -7,10 +7,6 @@ import { AuthProvider } from './hooks/useAuth.tsx';
 
 createRoot(document.getElementById("root")!).render(
   <BrowserRouter>
-    <AuthProvider>
-      <SocketProvider>
-        <App />
-      </SocketProvider>
-    </AuthProvider>
+    <App />
   </BrowserRouter>
 );

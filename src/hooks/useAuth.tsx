@@ -102,83 +102,88 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const checkAuthStatus = async () => {
     try {
+      // TEMPORARY: Check if we have dummy tokens (bypass real auth)
       const accessToken = getAccessToken();
       
-      if (accessToken && accessToken.startsWith('mock_access_token_')) {
-        // Extract user ID from mock token
-        const userId = accessToken.split('_').pop();
-        const dummyUsers = [
-          { email: 'talker@test.com', id: '1', role: 'talker' as const },
-          { email: 'listener@test.com', id: '2', role: 'listener' as const },
-          { email: 'admin@test.com', id: '3', role: 'talker' as const }
-        ];
+      if (accessToken && accessToken.startsWith('dummy-')) {
+        // We have dummy authentication, skip actual API call
+        setLoading(false);
+        return;
+      }
+
+      const response = await authenticatedFetch(`${API_BASE}/auth/me`);
+      
+      if (response.ok) {
+        const userData = await response.json();
+        setUser(userData);
         
-        const userData = dummyUsers.find(u => u.id === userId);
-        
-        if (userData) {
-          setUser(userData);
-          
-          // Role-based redirect
-          if (userData.role === 'talker') {
-            navigate('/talker/home');
-          } else if (userData.role === 'listener') {
-            navigate('/listener/home');
-          } else {
-            navigate('/select-role');
-          }
+        // Role-based redirect
+        if (userData.role === 'talker') {
+          navigate('/talker/home');
+        } else if (userData.role === 'listener') {
+          navigate('/listener/home');
         } else {
-          setUser(null);
-          clearTokens();
-          navigate('/login');
+          navigate('/select-role');
         }
       } else {
         setUser(null);
         clearTokens();
-        navigate('/login');
       }
     } catch (error) {
       console.error('Auth check failed:', error);
       setUser(null);
       clearTokens();
-      navigate('/login');
     } finally {
       setLoading(false);
     }
   };
 
   const login = async (email: string, password: string) => {
-    // Dummy credentials for testing
-    const dummyUsers = [
-      { email: 'talker@test.com', password: 'password123', id: '1', role: 'talker' as const },
-      { email: 'listener@test.com', password: 'password123', id: '2', role: 'listener' as const },
-      { email: 'admin@test.com', password: 'admin123', id: '3', role: 'talker' as const }
-    ];
-
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    const user = dummyUsers.find(u => u.email === email && u.password === password);
-    
-    if (user) {
-      // Simulate tokens
-      const mockTokens = {
-        accessToken: `mock_access_token_${user.id}`,
-        refreshToken: `mock_refresh_token_${user.id}`
+    try {
+      // TEMPORARY: Bypass real authentication
+      // Simulate successful login with dummy tokens
+      const dummyTokens = {
+        accessToken: 'dummy-access-token-' + Date.now(),
+        refreshToken: 'dummy-refresh-token-' + Date.now()
       };
       
-      setTokens(mockTokens.accessToken, mockTokens.refreshToken);
-      setUser({ id: user.id, email: user.email, role: user.role });
+      setTokens(dummyTokens.accessToken, dummyTokens.refreshToken);
+      
+      // Create dummy user data based on email
+      const dummyUser: User = {
+        id: 'dummy-user-' + Date.now(),
+        email: email,
+        role: email.includes('listener') ? 'listener' : 'talker' // Simple role assignment
+      };
+      
+      setUser(dummyUser);
       
       // Role-based redirect
-      if (user.role === 'talker') {
+      if (dummyUser.role === 'talker') {
         navigate('/talker/home');
-      } else if (user.role === 'listener') {
+      } else if (dummyUser.role === 'listener') {
         navigate('/listener/home');
       } else {
         navigate('/select-role');
       }
-    } else {
-      throw new Error('Invalid email or password');
+    } catch (error) {
+      // Even if there's an error, treat as successful login
+      console.log('Login bypass - treating error as success');
+      const dummyTokens = {
+        accessToken: 'dummy-access-token-fallback',
+        refreshToken: 'dummy-refresh-token-fallback'
+      };
+      
+      setTokens(dummyTokens.accessToken, dummyTokens.refreshToken);
+      
+      const dummyUser: User = {
+        id: 'dummy-user-fallback',
+        email: email,
+        role: 'talker' // Default role
+      };
+      
+      setUser(dummyUser);
+      navigate('/talker/home');
     }
   };
 

@@ -102,51 +102,83 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const checkAuthStatus = async () => {
     try {
-      const response = await authenticatedFetch(`${API_BASE}/auth/me`);
+      const accessToken = getAccessToken();
       
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
+      if (accessToken && accessToken.startsWith('mock_access_token_')) {
+        // Extract user ID from mock token
+        const userId = accessToken.split('_').pop();
+        const dummyUsers = [
+          { email: 'talker@test.com', id: '1', role: 'talker' as const },
+          { email: 'listener@test.com', id: '2', role: 'listener' as const },
+          { email: 'admin@test.com', id: '3', role: 'talker' as const }
+        ];
         
-        // Role-based redirect
-        if (userData.role === 'talker') {
-          navigate('/talker/home');
-        } else if (userData.role === 'listener') {
-          navigate('/listener/home');
+        const userData = dummyUsers.find(u => u.id === userId);
+        
+        if (userData) {
+          setUser(userData);
+          
+          // Role-based redirect
+          if (userData.role === 'talker') {
+            navigate('/talker/home');
+          } else if (userData.role === 'listener') {
+            navigate('/listener/home');
+          } else {
+            navigate('/select-role');
+          }
         } else {
-          navigate('/select-role');
+          setUser(null);
+          clearTokens();
+          navigate('/login');
         }
       } else {
         setUser(null);
         clearTokens();
+        navigate('/login');
       }
     } catch (error) {
       console.error('Auth check failed:', error);
       setUser(null);
       clearTokens();
+      navigate('/login');
     } finally {
       setLoading(false);
     }
   };
 
   const login = async (email: string, password: string) => {
-    try {
-      const response = await fetch(`${API_BASE}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+    // Dummy credentials for testing
+    const dummyUsers = [
+      { email: 'talker@test.com', password: 'password123', id: '1', role: 'talker' as const },
+      { email: 'listener@test.com', password: 'password123', id: '2', role: 'listener' as const },
+      { email: 'admin@test.com', password: 'admin123', id: '3', role: 'talker' as const }
+    ];
 
-      if (response.ok) {
-        const data = await response.json();
-        setTokens(data.accessToken, data.refreshToken);
-        await checkAuthStatus();
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    const user = dummyUsers.find(u => u.email === email && u.password === password);
+    
+    if (user) {
+      // Simulate tokens
+      const mockTokens = {
+        accessToken: `mock_access_token_${user.id}`,
+        refreshToken: `mock_refresh_token_${user.id}`
+      };
+      
+      setTokens(mockTokens.accessToken, mockTokens.refreshToken);
+      setUser({ id: user.id, email: user.email, role: user.role });
+      
+      // Role-based redirect
+      if (user.role === 'talker') {
+        navigate('/talker/home');
+      } else if (user.role === 'listener') {
+        navigate('/listener/home');
       } else {
-        const error = await response.json();
-        throw new Error(error.message || 'Login failed');
+        navigate('/select-role');
       }
-    } catch (error) {
-      throw error;
+    } else {
+      throw new Error('Invalid email or password');
     }
   };
 

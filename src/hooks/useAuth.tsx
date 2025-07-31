@@ -102,31 +102,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const checkAuthStatus = async () => {
     try {
+      // TEMPORARY: Check if we have dummy tokens (bypass real auth)
       const accessToken = getAccessToken();
       
-      if (accessToken) {
-        // Mock user data based on token
-        const mockUsers = {
-          'mock_access_token_1': { id: '1', email: 'talker@test.com', role: 'talker' as const },
-          'mock_access_token_2': { id: '2', email: 'listener@test.com', role: 'listener' as const }
-        };
+      if (accessToken && accessToken.startsWith('dummy-')) {
+        // We have dummy authentication, skip actual API call
+        setLoading(false);
+        return;
+      }
 
-        const userData = mockUsers[accessToken as keyof typeof mockUsers];
+      const response = await authenticatedFetch(`${API_BASE}/auth/me`);
+      
+      if (response.ok) {
+        const userData = await response.json();
+        setUser(userData);
         
-        if (userData) {
-          setUser(userData);
-          
-          // Role-based redirect
-          if (userData.role === 'talker') {
-            navigate('/talker/home');
-          } else if (userData.role === 'listener') {
-            navigate('/listener/home');
-          } else {
-            navigate('/select-role');
-          }
+        // Role-based redirect
+        if (userData.role === 'talker') {
+          navigate('/talker/home');
+        } else if (userData.role === 'listener') {
+          navigate('/listener/home');
         } else {
-          setUser(null);
-          clearTokens();
+          navigate('/select-role');
         }
       } else {
         setUser(null);
@@ -142,37 +139,51 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const login = async (email: string, password: string) => {
-    // Mock login with dummy credentials
-    const mockUsers = {
-      'talker@test.com': { id: '1', email: 'talker@test.com', role: 'talker' as const, password: 'test123' },
-      'listener@test.com': { id: '2', email: 'listener@test.com', role: 'listener' as const, password: 'test123' }
-    };
-
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    const mockUser = mockUsers[email as keyof typeof mockUsers];
-    
-    if (!mockUser || mockUser.password !== password) {
-      throw new Error('Invalid email or password');
-    }
-
-    // Mock tokens
-    const mockTokens = {
-      accessToken: `mock_access_token_${mockUser.id}`,
-      refreshToken: `mock_refresh_token_${mockUser.id}`
-    };
-
-    setTokens(mockTokens.accessToken, mockTokens.refreshToken);
-    setUser({ id: mockUser.id, email: mockUser.email, role: mockUser.role });
-    
-    // Role-based redirect
-    if (mockUser.role === 'talker') {
+    try {
+      // TEMPORARY: Bypass real authentication
+      // Simulate successful login with dummy tokens
+      const dummyTokens = {
+        accessToken: 'dummy-access-token-' + Date.now(),
+        refreshToken: 'dummy-refresh-token-' + Date.now()
+      };
+      
+      setTokens(dummyTokens.accessToken, dummyTokens.refreshToken);
+      
+      // Create dummy user data based on email
+      const dummyUser: User = {
+        id: 'dummy-user-' + Date.now(),
+        email: email,
+        role: email.includes('listener') ? 'listener' : 'talker' // Simple role assignment
+      };
+      
+      setUser(dummyUser);
+      
+      // Role-based redirect
+      if (dummyUser.role === 'talker') {
+        navigate('/talker/home');
+      } else if (dummyUser.role === 'listener') {
+        navigate('/listener/home');
+      } else {
+        navigate('/select-role');
+      }
+    } catch (error) {
+      // Even if there's an error, treat as successful login
+      console.log('Login bypass - treating error as success');
+      const dummyTokens = {
+        accessToken: 'dummy-access-token-fallback',
+        refreshToken: 'dummy-refresh-token-fallback'
+      };
+      
+      setTokens(dummyTokens.accessToken, dummyTokens.refreshToken);
+      
+      const dummyUser: User = {
+        id: 'dummy-user-fallback',
+        email: email,
+        role: 'talker' // Default role
+      };
+      
+      setUser(dummyUser);
       navigate('/talker/home');
-    } else if (mockUser.role === 'listener') {
-      navigate('/listener/home');
-    } else {
-      navigate('/select-role');
     }
   };
 

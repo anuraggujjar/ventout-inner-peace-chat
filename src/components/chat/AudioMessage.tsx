@@ -16,7 +16,11 @@ const AudioMessage = ({ audioData, duration, isCurrentUser }: AudioMessageProps)
 
   const togglePlayback = () => {
     if (!audioRef.current) {
-      const audio = new Audio(`data:audio/webm;base64,${audioData}`);
+      // Handle both base64 data and remote URLs
+      const audioSrc = audioData.startsWith('http') 
+        ? audioData 
+        : `data:audio/webm;base64,${audioData}`;
+      const audio = new Audio(audioSrc);
       audioRef.current = audio;
       
       audio.ontimeupdate = () => {

@@ -102,19 +102,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const checkAuthStatus = async () => {
     try {
-      const response = await authenticatedFetch(`${API_BASE}/auth/me`);
+      const accessToken = getAccessToken();
       
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
+      if (accessToken) {
+        // Mock user data based on token
+        const mockUsers = {
+          'mock_access_token_1': { id: '1', email: 'talker@test.com', role: 'talker' as const },
+          'mock_access_token_2': { id: '2', email: 'listener@test.com', role: 'listener' as const }
+        };
+
+        const userData = mockUsers[accessToken as keyof typeof mockUsers];
         
-        // Role-based redirect
-        if (userData.role === 'talker') {
-          navigate('/talker/home');
-        } else if (userData.role === 'listener') {
-          navigate('/listener/home');
+        if (userData) {
+          setUser(userData);
+          
+          // Role-based redirect
+          if (userData.role === 'talker') {
+            navigate('/talker/home');
+          } else if (userData.role === 'listener') {
+            navigate('/listener/home');
+          } else {
+            navigate('/select-role');
+          }
         } else {
-          navigate('/select-role');
+          setUser(null);
+          clearTokens();
         }
       } else {
         setUser(null);
@@ -130,23 +142,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const login = async (email: string, password: string) => {
-    try {
-      const response = await fetch(`${API_BASE}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+    // Mock login with dummy credentials
+    const mockUsers = {
+      'talker@test.com': { id: '1', email: 'talker@test.com', role: 'talker' as const, password: 'test123' },
+      'listener@test.com': { id: '2', email: 'listener@test.com', role: 'listener' as const, password: 'test123' }
+    };
 
-      if (response.ok) {
-        const data = await response.json();
-        setTokens(data.accessToken, data.refreshToken);
-        await checkAuthStatus();
-      } else {
-        const error = await response.json();
-        throw new Error(error.message || 'Login failed');
-      }
-    } catch (error) {
-      throw error;
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    const mockUser = mockUsers[email as keyof typeof mockUsers];
+    
+    if (!mockUser || mockUser.password !== password) {
+      throw new Error('Invalid email or password');
+    }
+
+    // Mock tokens
+    const mockTokens = {
+      accessToken: `mock_access_token_${mockUser.id}`,
+      refreshToken: `mock_refresh_token_${mockUser.id}`
+    };
+
+    setTokens(mockTokens.accessToken, mockTokens.refreshToken);
+    setUser({ id: mockUser.id, email: mockUser.email, role: mockUser.role });
+    
+    // Role-based redirect
+    if (mockUser.role === 'talker') {
+      navigate('/talker/home');
+    } else if (mockUser.role === 'listener') {
+      navigate('/listener/home');
+    } else {
+      navigate('/select-role');
     }
   };
 

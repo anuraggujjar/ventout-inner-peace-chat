@@ -174,10 +174,19 @@ const VoiceRecorder = ({ isOpen, onClose, onSendVoiceMessage }: VoiceRecorderPro
         </>
       ) : (
         <>
-          <span className="text-sm font-mono text-muted-foreground">
-            {formatTime(duration)}
+          <span className={`text-sm font-mono transition-colors duration-200 ${
+            isPlaying ? 'text-primary font-medium' : 'text-muted-foreground'
+          }`}>
+            {isPlaying ? 'Playing...' : formatTime(duration)}
           </span>
-          <Button onClick={playRecording} variant="outline" size="icon" className="rounded-full">
+          <Button 
+            onClick={playRecording} 
+            variant="outline" 
+            size="icon" 
+            className={`rounded-full transition-all duration-200 ${
+              isPlaying ? 'bg-primary/10 border-primary/30 animate-pulse' : ''
+            }`}
+          >
             {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
           </Button>
           <Button onClick={resetRecording} variant="outline" size="icon" className="rounded-full">

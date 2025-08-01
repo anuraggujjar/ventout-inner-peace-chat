@@ -47,16 +47,16 @@ const AudioMessage = ({ audioData, duration, isCurrentUser }: AudioMessageProps)
   const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className={`flex items-center space-x-3 p-3 rounded-lg min-w-[200px] ${
+    <div className={`flex items-center space-x-3 p-3 rounded-lg min-w-[200px] transition-all duration-300 ${
       isCurrentUser ? 'bg-primary/10' : 'bg-muted/50'
-    }`}>
+    } ${isPlaying ? 'shadow-md scale-[1.02]' : ''}`}>
       <Button 
         onClick={togglePlayback}
         size="icon"
         variant="ghost"
-        className={`rounded-full flex-shrink-0 ${
+        className={`rounded-full flex-shrink-0 transition-all duration-200 ${
           isCurrentUser ? 'hover:bg-primary/20' : 'hover:bg-muted'
-        }`}
+        } ${isPlaying ? 'bg-primary/20 animate-pulse' : ''}`}
       >
         {isPlaying ? (
           <Pause className="w-4 h-4" />
@@ -67,8 +67,14 @@ const AudioMessage = ({ audioData, duration, isCurrentUser }: AudioMessageProps)
       
       <div className="flex-1">
         <div className="flex items-center space-x-2 mb-1">
-          <Volume2 className="w-3 h-3 text-muted-foreground" />
-          <span className="text-xs text-muted-foreground">Voice message</span>
+          <Volume2 className={`w-3 h-3 transition-colors duration-200 ${
+            isPlaying ? 'text-primary animate-pulse' : 'text-muted-foreground'
+          }`} />
+          <span className={`text-xs transition-colors duration-200 ${
+            isPlaying ? 'text-primary font-medium' : 'text-muted-foreground'
+          }`}>
+            {isPlaying ? 'Playing...' : 'Voice message'}
+          </span>
         </div>
         
         {/* Progress bar */}
@@ -76,9 +82,12 @@ const AudioMessage = ({ audioData, duration, isCurrentUser }: AudioMessageProps)
           <div 
             className={`absolute left-0 top-0 h-full transition-all duration-200 ${
               isCurrentUser ? 'bg-primary' : 'bg-primary/60'
-            }`}
+            } ${isPlaying ? 'shadow-sm' : ''}`}
             style={{ width: `${progressPercentage}%` }}
           />
+          {isPlaying && (
+            <div className="absolute left-0 top-0 h-full w-full bg-gradient-to-r from-transparent via-primary/20 to-transparent animate-pulse" />
+          )}
         </div>
         
         <div className="flex justify-between items-center mt-1">

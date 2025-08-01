@@ -41,7 +41,7 @@ const MessageList = ({ messages, userRole, partnerTyping, messagesEndRef }: Mess
             key={msg.id}
             className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
           >
-            <Card className={`max-w-md ${isCurrentUser ? 'bg-primary text-primary-foreground' : ''}`}>
+            <Card className={`max-w-lg ${isCurrentUser ? 'bg-primary text-primary-foreground' : ''}`}>
               <CardContent className="p-4">
                 <div className={`flex items-start space-x-3 ${isCurrentUser ? 'flex-row-reverse space-x-reverse' : ''}`}>
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
@@ -59,8 +59,7 @@ const MessageList = ({ messages, userRole, partnerTyping, messagesEndRef }: Mess
                     </p>
                     
                     {msg.type === 'voice' && msg.audioData && msg.duration ? (
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-2">Voice Message</p>
+                      <div className="w-full">
                         <AudioMessage 
                           audioData={msg.audioData}
                           duration={msg.duration}

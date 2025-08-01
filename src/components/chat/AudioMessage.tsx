@@ -50,12 +50,18 @@ const AudioMessage = ({ audioData, duration, isCurrentUser }: AudioMessageProps)
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const progressPercentage = (duration > 0 ? (currentTime / duration) : 0) * 100;
+  const displayDuration = duration > 0 ? duration : 1; // Use minimum 1 second for display
 
-  // Add safety check
-  if (!audioData || duration <= 0) {
-    console.error('AudioMessage: Invalid props', { audioData: !!audioData, duration });
-    return <div className="text-red-500 text-sm">Error: Invalid audio data</div>;
+  // Add safety check but be more lenient
+  if (!audioData) {
+    console.error('AudioMessage: No audio data provided');
+    return <div className="text-red-500 text-sm">Error: No audio data</div>;
+  }
+
+  if (duration <= 0) {
+    console.warn('AudioMessage: Invalid duration, using 1 second default', { duration });
+    // Use 1 second as fallback instead of rejecting
   }
 
   return (
@@ -109,7 +115,7 @@ const AudioMessage = ({ audioData, duration, isCurrentUser }: AudioMessageProps)
             {formatTime(currentTime)}
           </span>
           <span className="text-xs text-muted-foreground font-mono">
-            {formatTime(duration)}
+            {formatTime(displayDuration)}
           </span>
         </div>
       </div>

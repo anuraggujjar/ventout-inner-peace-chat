@@ -56,13 +56,15 @@ const VoiceRecorder = ({ isOpen, onClose, onSendVoiceMessage }: VoiceRecorderPro
         const reader = new FileReader();
         reader.onload = () => {
           const base64 = (reader.result as string).split(',')[1];
+          const finalDuration = currentTime > 0 ? currentTime : 1; // Ensure minimum 1 second
           console.log('Audio recording finished:', {
-            duration: currentTime,
+            duration: finalDuration,
+            currentTime,
             audioDataLength: base64.length,
             type: 'voice'
           });
           // Auto-send the audio immediately after recording stops
-          onSendVoiceMessage(base64, currentTime);
+          onSendVoiceMessage(base64, finalDuration);
           handleClose();
         };
         reader.readAsDataURL(audioBlob);
@@ -85,9 +87,11 @@ const VoiceRecorder = ({ isOpen, onClose, onSendVoiceMessage }: VoiceRecorderPro
 
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
+      const finalTime = currentTime || 1; // Ensure we have a valid duration
+      setDuration(finalTime);
+      console.log('Stopping recording, duration:', finalTime);
       mediaRecorderRef.current.stop();
       setIsRecording(false);
-      setDuration(currentTime);
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
       }

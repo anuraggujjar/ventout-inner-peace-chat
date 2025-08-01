@@ -59,11 +59,14 @@ const MessageList = ({ messages, userRole, partnerTyping, messagesEndRef }: Mess
                     </p>
                     
                     {msg.type === 'voice' && msg.audioData && msg.duration ? (
-                      <AudioMessage 
-                        audioData={msg.audioData}
-                        duration={msg.duration}
-                        isCurrentUser={isCurrentUser}
-                      />
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-2">Voice Message</p>
+                        <AudioMessage 
+                          audioData={msg.audioData}
+                          duration={msg.duration}
+                          isCurrentUser={isCurrentUser}
+                        />
+                      </div>
                     ) : (
                       <p className={`text-sm ${
                         isCurrentUser ? 'text-primary-foreground' : 'text-foreground'

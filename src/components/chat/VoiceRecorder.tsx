@@ -56,6 +56,11 @@ const VoiceRecorder = ({ isOpen, onClose, onSendVoiceMessage }: VoiceRecorderPro
         const reader = new FileReader();
         reader.onload = () => {
           const base64 = (reader.result as string).split(',')[1];
+          console.log('Audio recording finished:', {
+            duration: currentTime,
+            audioDataLength: base64.length,
+            type: 'voice'
+          });
           // Auto-send the audio immediately after recording stops
           onSendVoiceMessage(base64, currentTime);
           handleClose();

@@ -14,6 +14,12 @@ const AudioMessage = ({ audioData, duration, isCurrentUser }: AudioMessageProps)
   const [currentTime, setCurrentTime] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  console.log('AudioMessage rendering with props:', { 
+    audioDataLength: audioData?.length, 
+    duration, 
+    isCurrentUser 
+  });
+
   const togglePlayback = () => {
     if (!audioRef.current) {
       const audio = new Audio(`data:audio/webm;base64,${audioData}`);
@@ -45,6 +51,12 @@ const AudioMessage = ({ audioData, duration, isCurrentUser }: AudioMessageProps)
   };
 
   const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
+
+  // Add safety check
+  if (!audioData || duration <= 0) {
+    console.error('AudioMessage: Invalid props', { audioData: !!audioData, duration });
+    return <div className="text-red-500 text-sm">Error: Invalid audio data</div>;
+  }
 
   return (
     <div className={`flex items-center space-x-3 p-3 rounded-lg min-w-[200px] transition-all duration-300 ${

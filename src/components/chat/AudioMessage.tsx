@@ -65,44 +65,39 @@ const AudioMessage = ({ audioData, duration, isCurrentUser }: AudioMessageProps)
   }
 
   return (
-    <div className={`flex items-center space-x-2 p-2 rounded-lg min-w-[160px] max-w-[180px] transition-all duration-300 ${
+    <div className={`flex items-center space-x-2 p-2 rounded-lg max-w-[140px] transition-all duration-300 ${
       isCurrentUser 
-        ? 'bg-primary/5 border border-primary/10' 
-        : 'bg-muted/40 border border-border/30'
-    } ${isPlaying ? 'shadow-md scale-[1.01] ring-1 ring-primary/20' : 'shadow-sm'}`}>
+        ? 'bg-primary/8' 
+        : 'bg-muted/30'
+    }`}>
       <Button 
         onClick={togglePlayback}
         size="sm"
         variant="ghost"
-        className={`rounded-full flex-shrink-0 w-6 h-6 p-0 transition-all duration-200 ${
-          isPlaying ? 'bg-primary text-primary-foreground' : 'hover:bg-primary/10'
+        className={`rounded-full flex-shrink-0 w-5 h-5 p-0 transition-all duration-200 ${
+          isPlaying ? 'bg-primary text-primary-foreground' : 'hover:bg-primary/20'
         }`}
       >
         {isPlaying ? (
-          <Pause className="w-2.5 h-2.5" />
+          <Pause className="w-2 h-2" />
         ) : (
-          <Play className="w-2.5 h-2.5 ml-0.5" />
+          <Play className="w-2 h-2 ml-0.5" />
         )}
       </Button>
       
       <div className="flex-1 min-w-0">
         {/* Progress bar */}
-        <div className="relative h-1 bg-muted/50 rounded-full overflow-hidden mb-1">
+        <div className="relative h-0.5 bg-muted/40 rounded-full overflow-hidden mb-1">
           <div 
             className={`absolute left-0 top-0 h-full transition-all duration-200 rounded-full ${
-              isCurrentUser ? 'bg-primary' : 'bg-primary/60'
+              isCurrentUser ? 'bg-primary' : 'bg-primary/70'
             }`}
             style={{ width: `${progressPercentage}%` }}
           />
         </div>
         
-        <div className="flex justify-between items-center">
-          <span className="text-xs text-muted-foreground/80 font-mono">
-            {formatTime(currentTime)}
-          </span>
-          <span className="text-xs text-muted-foreground/60 font-mono">
-            {formatTime(displayDuration)}
-          </span>
+        <div className="text-xs text-muted-foreground/70 font-mono text-center">
+          {formatTime(currentTime)} / {formatTime(displayDuration)}
         </div>
       </div>
     </div>

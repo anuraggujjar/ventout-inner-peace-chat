@@ -65,29 +65,29 @@ const AudioMessage = ({ audioData, duration, isCurrentUser }: AudioMessageProps)
   }
 
   return (
-    <div className={`flex items-center space-x-1 p-1.5 rounded-lg max-w-[120px] transition-all duration-300 border-[0.5px] ${
+    <div className={`flex items-center space-x-2 p-2 rounded-lg max-w-[140px] transition-all duration-300 border ring-1 ${
       isCurrentUser 
-        ? 'bg-primary/8 border-primary/20 ring-1 ring-primary/5' 
-        : 'bg-muted/30 border-border/30 ring-1 ring-border/5'
+        ? 'bg-primary/8 border-primary/30 ring-primary/20' 
+        : 'bg-muted/30 border-border/40 ring-border/20'
     }`}>
       <Button 
         onClick={togglePlayback}
         size="sm"
         variant="ghost"
-        className={`rounded-full flex-shrink-0 w-4 h-4 p-0 transition-all duration-200 ${
+        className={`rounded-full flex-shrink-0 w-6 h-6 p-0 transition-all duration-200 ${
           isPlaying ? 'bg-primary text-primary-foreground' : 'hover:bg-primary/20'
         }`}
       >
         {isPlaying ? (
-          <Pause className="w-1.5 h-1.5" />
+          <Pause className="w-3 h-3" />
         ) : (
-          <Play className="w-1.5 h-1.5 ml-px" />
+          <Play className="w-3 h-3 ml-px" />
         )}
       </Button>
       
       <div className="flex-1 min-w-0">
         {/* Progress bar */}
-        <div className="relative h-px bg-muted/40 rounded-full overflow-hidden">
+        <div className="relative h-1 bg-muted/40 rounded-full overflow-hidden">
           <div 
             className={`absolute left-0 top-0 h-full transition-all duration-200 rounded-full ${
               isCurrentUser ? 'bg-primary' : 'bg-primary/70'
@@ -95,10 +95,6 @@ const AudioMessage = ({ audioData, duration, isCurrentUser }: AudioMessageProps)
             style={{ width: `${progressPercentage}%` }}
           />
         </div>
-      </div>
-      
-      <div className="text-xs text-muted-foreground/70 font-mono text-right ml-1 whitespace-nowrap">
-        {formatTime(currentTime)}/{formatTime(displayDuration)}
       </div>
     </div>
   );

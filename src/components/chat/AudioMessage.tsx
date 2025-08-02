@@ -65,10 +65,10 @@ const AudioMessage = ({ audioData, duration, isCurrentUser }: AudioMessageProps)
   }
 
   return (
-    <div className={`flex items-center space-x-2 p-2 rounded-lg max-w-[140px] transition-all duration-300 ${
+    <div className={`flex items-center space-x-2 p-2 rounded-lg max-w-[140px] transition-all duration-300 border-[0.5px] ${
       isCurrentUser 
-        ? 'bg-primary/8' 
-        : 'bg-muted/30'
+        ? 'bg-primary/8 border-primary/20 ring-1 ring-primary/5' 
+        : 'bg-muted/30 border-border/30 ring-1 ring-border/5'
     }`}>
       <Button 
         onClick={togglePlayback}

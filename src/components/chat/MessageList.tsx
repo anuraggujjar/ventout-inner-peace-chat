@@ -41,7 +41,7 @@ const MessageList = ({ messages, userRole, partnerTyping, messagesEndRef }: Mess
             key={msg.id}
             className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
           >
-            <Card className={`max-w-lg ${isCurrentUser ? 'bg-primary text-primary-foreground' : ''}`}>
+            <Card className={`max-w-lg border-[0.5px] ${isCurrentUser ? 'bg-primary text-primary-foreground border-primary/30 ring-1 ring-primary/10' : 'border-border/40 ring-1 ring-border/5'}`}>
               <CardContent className="p-4">
                 <div className={`flex items-start space-x-3 ${isCurrentUser ? 'flex-row-reverse space-x-reverse' : ''}`}>
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
@@ -90,7 +90,7 @@ const MessageList = ({ messages, userRole, partnerTyping, messagesEndRef }: Mess
       {/* Partner typing indicator */}
       {partnerTyping && (
         <div className="flex justify-start">
-          <Card className="max-w-md">
+          <Card className="max-w-md border-[0.5px] border-border/40 ring-1 ring-border/5">
             <CardContent className="p-4">
               <div className="flex items-start space-x-3">
                 <div className={`w-8 h-8 rounded-full bg-gradient-to-br from-${getRoleColor(userRole === 'listener' ? 'talker' : 'listener')}-500/20 to-${getRoleColor(userRole === 'listener' ? 'talker' : 'listener')}-600/20 flex items-center justify-center flex-shrink-0`}>

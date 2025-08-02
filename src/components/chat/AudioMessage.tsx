@@ -65,58 +65,63 @@ const AudioMessage = ({ audioData, duration, isCurrentUser }: AudioMessageProps)
   }
 
   return (
-    <div className={`flex items-center space-x-3 p-4 rounded-lg min-w-[280px] max-w-[350px] transition-all duration-300 border ${
+    <div className={`flex items-center space-x-2 p-3 rounded-xl min-w-[200px] max-w-[240px] transition-all duration-300 ${
       isCurrentUser 
-        ? 'bg-primary/10 border-primary/20' 
-        : 'bg-muted/80 border-border'
-    } ${isPlaying ? 'shadow-md scale-[1.02] ring-2 ring-primary/20' : ''}`}>
+        ? 'bg-primary/5 border border-primary/10' 
+        : 'bg-muted/50 border border-border/50'
+    } ${isPlaying ? 'shadow-lg scale-[1.02] ring-1 ring-primary/30' : 'shadow-sm'}`}>
       <Button 
         onClick={togglePlayback}
-        size="icon"
+        size="sm"
         variant={isCurrentUser ? "secondary" : "outline"}
-        className={`rounded-full flex-shrink-0 w-12 h-12 transition-all duration-200 ${
-          isCurrentUser ? 'hover:bg-primary/30' : 'hover:bg-primary/10'
-        } ${isPlaying ? 'bg-primary text-primary-foreground animate-pulse scale-110' : ''}`}
+        className={`rounded-full flex-shrink-0 w-8 h-8 p-0 transition-all duration-200 ${
+          isCurrentUser ? 'hover:bg-primary/20' : 'hover:bg-primary/10'
+        } ${isPlaying ? 'bg-primary text-primary-foreground scale-105' : ''}`}
       >
         {isPlaying ? (
-          <Pause className="w-5 h-5" />
+          <Pause className="w-3 h-3" />
         ) : (
-          <Play className="w-5 h-5 ml-0.5" />
+          <Play className="w-3 h-3 ml-0.5" />
         )}
       </Button>
       
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center space-x-2 mb-2">
-          <Volume2 className={`w-4 h-4 transition-colors duration-200 ${
-            isPlaying ? 'text-primary animate-pulse' : 'text-muted-foreground'
-          }`} />
-          <span className={`text-sm font-medium transition-colors duration-200 ${
-            isPlaying ? 'text-primary' : 'text-muted-foreground'
-          }`}>
-            {isPlaying ? 'Playing...' : 'Voice message'}
+      <div className="flex-1 min-w-0 space-y-1">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-1">
+            <Volume2 className={`w-3 h-3 transition-colors duration-200 ${
+              isPlaying ? 'text-primary' : 'text-muted-foreground'
+            }`} />
+            <span className={`text-xs font-medium transition-colors duration-200 ${
+              isPlaying ? 'text-primary' : 'text-muted-foreground'
+            }`}>
+              {isPlaying ? 'Playing' : 'Voice'}
+            </span>
+          </div>
+          <span className="text-xs text-muted-foreground font-mono">
+            {formatTime(displayDuration)}
           </span>
         </div>
         
         {/* Progress bar */}
-        <div className="relative h-2 bg-muted rounded-full overflow-hidden mb-2">
+        <div className="relative h-1.5 bg-muted/60 rounded-full overflow-hidden">
           <div 
             className={`absolute left-0 top-0 h-full transition-all duration-200 rounded-full ${
-              isCurrentUser ? 'bg-primary' : 'bg-primary/80'
-            } ${isPlaying ? 'shadow-sm' : ''}`}
+              isCurrentUser ? 'bg-primary' : 'bg-primary/70'
+            }`}
             style={{ width: `${progressPercentage}%` }}
           />
           {isPlaying && (
-            <div className="absolute left-0 top-0 h-full w-full bg-gradient-to-r from-transparent via-primary/30 to-transparent animate-pulse rounded-full" />
+            <div className="absolute left-0 top-0 h-full w-full bg-gradient-to-r from-transparent via-primary/20 to-transparent animate-pulse rounded-full" />
           )}
         </div>
         
         <div className="flex justify-between items-center">
-          <span className="text-xs text-muted-foreground font-mono">
+          <span className="text-xs text-muted-foreground/70 font-mono">
             {formatTime(currentTime)}
           </span>
-          <span className="text-xs text-muted-foreground font-mono">
-            {formatTime(displayDuration)}
-          </span>
+          <div className={`w-1 h-1 rounded-full transition-colors duration-200 ${
+            isPlaying ? 'bg-primary animate-pulse' : 'bg-muted-foreground/30'
+          }`} />
         </div>
       </div>
     </div>

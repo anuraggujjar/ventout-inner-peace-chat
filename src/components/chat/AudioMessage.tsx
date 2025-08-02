@@ -65,63 +65,44 @@ const AudioMessage = ({ audioData, duration, isCurrentUser }: AudioMessageProps)
   }
 
   return (
-    <div className={`flex items-center space-x-2 p-3 rounded-xl min-w-[200px] max-w-[240px] transition-all duration-300 ${
+    <div className={`flex items-center space-x-2 p-2 rounded-lg min-w-[160px] max-w-[180px] transition-all duration-300 ${
       isCurrentUser 
         ? 'bg-primary/5 border border-primary/10' 
-        : 'bg-muted/50 border border-border/50'
-    } ${isPlaying ? 'shadow-lg scale-[1.02] ring-1 ring-primary/30' : 'shadow-sm'}`}>
+        : 'bg-muted/40 border border-border/30'
+    } ${isPlaying ? 'shadow-md scale-[1.01] ring-1 ring-primary/20' : 'shadow-sm'}`}>
       <Button 
         onClick={togglePlayback}
         size="sm"
-        variant={isCurrentUser ? "secondary" : "outline"}
-        className={`rounded-full flex-shrink-0 w-8 h-8 p-0 transition-all duration-200 ${
-          isCurrentUser ? 'hover:bg-primary/20' : 'hover:bg-primary/10'
-        } ${isPlaying ? 'bg-primary text-primary-foreground scale-105' : ''}`}
+        variant="ghost"
+        className={`rounded-full flex-shrink-0 w-6 h-6 p-0 transition-all duration-200 ${
+          isPlaying ? 'bg-primary text-primary-foreground' : 'hover:bg-primary/10'
+        }`}
       >
         {isPlaying ? (
-          <Pause className="w-3 h-3" />
+          <Pause className="w-2.5 h-2.5" />
         ) : (
-          <Play className="w-3 h-3 ml-0.5" />
+          <Play className="w-2.5 h-2.5 ml-0.5" />
         )}
       </Button>
       
-      <div className="flex-1 min-w-0 space-y-1">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-1">
-            <Volume2 className={`w-3 h-3 transition-colors duration-200 ${
-              isPlaying ? 'text-primary' : 'text-muted-foreground'
-            }`} />
-            <span className={`text-xs font-medium transition-colors duration-200 ${
-              isPlaying ? 'text-primary' : 'text-muted-foreground'
-            }`}>
-              {isPlaying ? 'Playing' : 'Voice'}
-            </span>
-          </div>
-          <span className="text-xs text-muted-foreground font-mono">
-            {formatTime(displayDuration)}
-          </span>
-        </div>
-        
+      <div className="flex-1 min-w-0">
         {/* Progress bar */}
-        <div className="relative h-1.5 bg-muted/60 rounded-full overflow-hidden">
+        <div className="relative h-1 bg-muted/50 rounded-full overflow-hidden mb-1">
           <div 
             className={`absolute left-0 top-0 h-full transition-all duration-200 rounded-full ${
-              isCurrentUser ? 'bg-primary' : 'bg-primary/70'
+              isCurrentUser ? 'bg-primary' : 'bg-primary/60'
             }`}
             style={{ width: `${progressPercentage}%` }}
           />
-          {isPlaying && (
-            <div className="absolute left-0 top-0 h-full w-full bg-gradient-to-r from-transparent via-primary/20 to-transparent animate-pulse rounded-full" />
-          )}
         </div>
         
         <div className="flex justify-between items-center">
-          <span className="text-xs text-muted-foreground/70 font-mono">
+          <span className="text-xs text-muted-foreground/80 font-mono">
             {formatTime(currentTime)}
           </span>
-          <div className={`w-1 h-1 rounded-full transition-colors duration-200 ${
-            isPlaying ? 'bg-primary animate-pulse' : 'bg-muted-foreground/30'
-          }`} />
+          <span className="text-xs text-muted-foreground/60 font-mono">
+            {formatTime(displayDuration)}
+          </span>
         </div>
       </div>
     </div>

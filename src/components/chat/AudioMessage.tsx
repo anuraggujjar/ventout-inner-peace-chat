@@ -33,13 +33,23 @@ const AudioMessage = ({ audioData, duration, isCurrentUser }: AudioMessageProps)
         setIsPlaying(false);
         setCurrentTime(0);
       };
+      
+      audio.onloadedmetadata = () => {
+        // Update duration from actual audio if available
+        if (audio.duration && audio.duration > 0) {
+          console.log('Audio loaded, actual duration:', audio.duration);
+        }
+      };
     }
 
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
-      audioRef.current.play();
+      audioRef.current.play().catch(error => {
+        console.error('Error playing audio:', error);
+        setIsPlaying(false);
+      });
       setIsPlaying(true);
     }
   };
@@ -94,6 +104,11 @@ const AudioMessage = ({ audioData, duration, isCurrentUser }: AudioMessageProps)
             }`}
             style={{ width: `${progressPercentage}%` }}
           />
+        </div>
+        
+        {/* Timer display */}
+        <div className="text-[10px] text-muted-foreground/70 font-mono mt-0.5 text-center">
+          {formatTime(currentTime)} / {formatTime(displayDuration)}
         </div>
       </div>
     </div>

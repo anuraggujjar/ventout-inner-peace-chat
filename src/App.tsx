@@ -7,6 +7,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { SecurityProvider } from "@/contexts/SecurityContext";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { SplashScreen } from "@/components/SplashScreen";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -16,6 +18,9 @@ import HistoryPage from "./pages/HistoryPage";
 import TopicSelectionPage from "./pages/TopicSelectionPage";
 import FeelingSelectionPage from "./pages/FeelingSelectionPage";
 import ChatRequestSentPage from "./pages/ChatRequestSentPage";
+import { AuthPage } from "./pages/AuthPage";
+import { HomePage } from "./pages/HomePage";
+import { ListenerHomePage } from "./pages/ListenerHomePage";
 import './App.css';
 
 const queryClient = new QueryClient();
@@ -35,23 +40,87 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <SecurityProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/chat" element={<ChatPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-                <Route path="/history" element={<HistoryPage />} />
-                <Route path="/topic-selection" element={<TopicSelectionPage />} />
-                <Route path="/feeling-selection" element={<FeelingSelectionPage />} />
-                <Route path="/chat-request-sent" element={<ChatRequestSentPage />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
+          <AuthProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Routes>
+                  {/* Public Routes */}
+                  <Route path="/" element={<Index />} />
+                  <Route path="/auth" element={<AuthPage />} />
+                  
+                  {/* Protected Routes */}
+                  <Route 
+                    path="/home" 
+                    element={
+                      <ProtectedRoute>
+                        <HomePage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/listener/home" 
+                    element={
+                      <ProtectedRoute requiredRole="listener">
+                        <ListenerHomePage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/chat" 
+                    element={
+                      <ProtectedRoute>
+                        <ChatPage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/settings" 
+                    element={
+                      <ProtectedRoute>
+                        <SettingsPage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/history" 
+                    element={
+                      <ProtectedRoute>
+                        <HistoryPage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/topic-selection" 
+                    element={
+                      <ProtectedRoute>
+                        <TopicSelectionPage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/feeling-selection" 
+                    element={
+                      <ProtectedRoute>
+                        <FeelingSelectionPage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/chat-request-sent" 
+                    element={
+                      <ProtectedRoute>
+                        <ChatRequestSentPage />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </TooltipProvider>
+          </AuthProvider>
         </SecurityProvider>
       </ThemeProvider>
     </QueryClientProvider>

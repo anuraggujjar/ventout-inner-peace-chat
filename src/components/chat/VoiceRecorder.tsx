@@ -56,10 +56,11 @@ const VoiceRecorder = ({ isOpen, onClose, onSendVoiceMessage }: VoiceRecorderPro
         const reader = new FileReader();
         reader.onload = () => {
           const base64 = (reader.result as string).split(',')[1];
-          // Use the currentTime at the moment of stopping, ensure minimum 1 second
-          const recordingDuration = Math.max(currentTime, 1);
+          // Use the duration that was set when stopping, not currentTime at this moment
+          const recordingDuration = Math.max(duration, 1);
           console.log('Audio recording finished:', {
             duration: recordingDuration,
+            finalDuration: duration,
             currentTime,
             audioDataLength: base64.length,
             type: 'voice'

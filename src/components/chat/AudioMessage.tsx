@@ -22,7 +22,17 @@ const AudioMessage = ({ audioData, duration, isCurrentUser }: AudioMessageProps)
 
   const togglePlayback = () => {
     if (!audioRef.current) {
-      const audio = new Audio(`data:audio/webm;base64,${audioData}`);
+      // Create audio with proper format specification
+      const audioBlob = new Blob([
+        new Uint8Array(
+          atob(audioData)
+            .split('')
+            .map(char => char.charCodeAt(0))
+        )
+      ], { type: 'audio/webm; codecs=opus' });
+      
+      const audioUrl = URL.createObjectURL(audioBlob);
+      const audio = new Audio(audioUrl);
       audioRef.current = audio;
       
       audio.ontimeupdate = () => {
@@ -32,6 +42,7 @@ const AudioMessage = ({ audioData, duration, isCurrentUser }: AudioMessageProps)
       audio.onended = () => {
         setIsPlaying(false);
         setCurrentTime(0);
+        URL.revokeObjectURL(audioUrl);
       };
       
       audio.onloadedmetadata = () => {
@@ -39,6 +50,11 @@ const AudioMessage = ({ audioData, duration, isCurrentUser }: AudioMessageProps)
         if (audio.duration && audio.duration > 0) {
           console.log('Audio loaded, actual duration:', audio.duration);
         }
+      };
+      
+      audio.onerror = (error) => {
+        console.error('Audio error:', error);
+        setIsPlaying(false);
       };
     }
 

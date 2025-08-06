@@ -13,7 +13,8 @@
     },
     "GoogleAuth": {
       "scopes": ["profile", "email"],
-      "serverClientId": "YOUR_GOOGLE_SERVER_CLIENT_ID.apps.googleusercontent.com",
+      "serverClientId": "YOUR_GOOGLE_WEB_CLIENT_ID.apps.googleusercontent.com",
+      "clientId": "YOUR_GOOGLE_WEB_CLIENT_ID.apps.googleusercontent.com",
       "forceCodeForRefreshToken": true
     }
   },

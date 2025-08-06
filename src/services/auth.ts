@@ -1,8 +1,12 @@
 import axios from 'axios';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import { Preferences } from '@capacitor/preferences';
+import { Capacitor } from '@capacitor/core';
 
-const API_BASE_URL = 'https://your-backend-url.com'; // Replace with your actual backend URL
+const API_BASE_URL = 'http://localhost:3000'; // Backend URL
+
+// Google Web Client ID - replace with your actual client ID
+const GOOGLE_WEB_CLIENT_ID = 'YOUR_GOOGLE_WEB_CLIENT_ID.apps.googleusercontent.com';
 
 export interface User {
   id: string;
@@ -51,6 +55,48 @@ class AuthService {
 
   constructor() {
     this.setupInterceptors();
+    this.initializeGoogleAuth();
+  }
+
+  private async initializeGoogleAuth() {
+    if (Capacitor.isNativePlatform()) {
+      // Initialize for native platforms
+      await GoogleAuth.initialize({
+        clientId: GOOGLE_WEB_CLIENT_ID,
+        scopes: ['profile', 'email'],
+        grantOfflineAccess: true,
+      });
+    } else {
+      // Initialize for web platform
+      await this.loadGoogleWebSDK();
+    }
+  }
+
+  private loadGoogleWebSDK(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (typeof window.gapi !== 'undefined') {
+        resolve();
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = 'https://apis.google.com/js/api.js';
+      script.onload = () => {
+        window.gapi.load('auth2', {
+          callback: () => {
+            window.gapi.auth2.init({
+              client_id: GOOGLE_WEB_CLIENT_ID,
+              scope: 'profile email'
+            }).then(() => {
+              resolve();
+            }).catch(reject);
+          },
+          onerror: reject
+        });
+      };
+      script.onerror = reject;
+      document.head.appendChild(script);
+    });
   }
 
   private setupInterceptors() {
@@ -101,14 +147,39 @@ class AuthService {
   // Google Authentication
   async googleLogin(): Promise<AuthResponse> {
     try {
-      const googleUser = await GoogleAuth.signIn();
-      
-      if (!googleUser.authentication?.idToken) {
-        throw new Error('Failed to get Google ID token');
+      let idToken: string;
+
+      if (Capacitor.isNativePlatform()) {
+        // Native platform (iOS/Android)
+        const googleUser = await GoogleAuth.signIn();
+        
+        if (!googleUser.authentication?.idToken) {
+          throw new Error('Failed to get Google ID token from native auth');
+        }
+        
+        idToken = googleUser.authentication.idToken;
+      } else {
+        // Web platform
+        await this.loadGoogleWebSDK();
+        const authInstance = window.gapi.auth2.getAuthInstance();
+        
+        if (!authInstance) {
+          throw new Error('Google Auth not properly initialized');
+        }
+
+        const googleUser = await authInstance.signIn({
+          scope: 'profile email'
+        });
+        
+        idToken = googleUser.getAuthResponse().id_token;
+        
+        if (!idToken) {
+          throw new Error('Failed to get Google ID token from web auth');
+        }
       }
 
       const response = await this.apiClient.post('/auth/google/callback', {
-        tokenId: googleUser.authentication.idToken,
+        tokenId: idToken,
       });
 
       const authData: AuthResponse = response.data;
@@ -116,6 +187,7 @@ class AuthService {
       
       return authData;
     } catch (error) {
+      console.error('Google login error:', error);
       throw new Error(error instanceof Error ? error.message : 'Google login failed');
     }
   }
@@ -207,7 +279,14 @@ class AuthService {
   async logout(): Promise<void> {
     await this.clearTokens();
     try {
-      await GoogleAuth.signOut();
+      if (Capacitor.isNativePlatform()) {
+        await GoogleAuth.signOut();
+      } else {
+        const authInstance = window.gapi?.auth2?.getAuthInstance();
+        if (authInstance) {
+          await authInstance.signOut();
+        }
+      }
     } catch {
       // Ignore Google signout errors
     }

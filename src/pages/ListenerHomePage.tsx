@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 export const ListenerHomePage: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [currentView, setCurrentView] = useState<'dashboard' | 'talker-selection'>('dashboard');
 
   const handleLogout = async () => {
     await logout();

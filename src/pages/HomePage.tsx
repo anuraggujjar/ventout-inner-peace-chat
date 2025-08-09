@@ -64,14 +64,28 @@ export const HomePage: React.FC = () => {
             <CardTitle>Quick Actions</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <Button className="w-full" size="lg">
+            <Button 
+              className="w-full" 
+              size="lg"
+              onClick={() => navigate('/chat')}
+            >
               <MessageCircle className="h-4 w-4 mr-2" />
               Start Conversation
             </Button>
-            <Button variant="outline" className="w-full" size="lg">
+            <Button 
+              variant="outline" 
+              className="w-full" 
+              size="lg"
+              onClick={() => navigate('/topic-selection')}
+            >
               Browse Topics
             </Button>
-            <Button variant="outline" className="w-full" size="lg">
+            <Button 
+              variant="outline" 
+              className="w-full" 
+              size="lg"
+              onClick={() => navigate('/history')}
+            >
               View History
             </Button>
           </CardContent>

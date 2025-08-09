@@ -21,6 +21,7 @@ import ChatRequestSentPage from "./pages/ChatRequestSentPage";
 import { AuthPage } from "./pages/AuthPage";
 import { HomePage } from "./pages/HomePage";
 import { ListenerHomePage } from "./pages/ListenerHomePage";
+import { TalkerDashboard } from "./pages/TalkerDashboard";
 import './App.css';
 
 const queryClient = new QueryClient();
@@ -54,8 +55,8 @@ const App = () => {
                   <Route 
                     path="/home" 
                     element={
-                      <ProtectedRoute>
-                        <HomePage />
+                      <ProtectedRoute requiredRole="talker">
+                        <TalkerDashboard />
                       </ProtectedRoute>
                     } 
                   />

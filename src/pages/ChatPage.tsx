@@ -8,7 +8,7 @@ import MessageInput from '@/components/chat/MessageInput';
 import WaitingForMatch from '@/components/chat/WaitingForMatch';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
-import { useSocket } from '@/hooks/useSocket';
+import { useSocketContext } from '@/contexts/SocketContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { sanitizeInput } from '@/utils/privacy';
 import { Message } from '@/types/message';
@@ -35,7 +35,7 @@ const ChatPage = () => {
     onVoiceMessage,
     onPartnerTyping,
     onMessageStatus
-  } = useSocket();
+  } = useSocketContext();
   
   // Local state
   const [message, setMessage] = useState('');

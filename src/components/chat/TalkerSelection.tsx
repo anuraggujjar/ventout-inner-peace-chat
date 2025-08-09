@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { MessageCircle, Clock, Users } from 'lucide-react';
-import { useSocket } from '@/hooks/useSocket';
+import { useSocketContext } from '@/contexts/SocketContext';
 import { UserInfo } from '@/services/socket';
 import { useToast } from '@/hooks/use-toast';
 
@@ -12,7 +12,7 @@ interface TalkerSelectionProps {
 }
 
 const TalkerSelection = ({ onChatStarted }: TalkerSelectionProps) => {
-  const { availableTalkers, requestChat, isConnected, currentRoom, partner } = useSocket();
+  const { availableTalkers, requestChat, isConnected, currentRoom, partner } = useSocketContext();
   const { toast } = useToast();
   const [selectedTalker, setSelectedTalker] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);

@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
-import { useSocket } from '@/hooks/useSocket';
+import { useSocketContext } from '@/contexts/SocketContext';
 import { MessageCircle, LogOut, Users, Clock, Heart, CheckCircle, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { UserInfo } from '@/services/socket';
@@ -23,7 +23,7 @@ export const TalkerDashboard: React.FC = () => {
     partner, 
     joinWaitingQueue, 
     leaveWaitingQueue 
-  } = useSocket();
+  } = useSocketContext();
   
   const [isInQueue, setIsInQueue] = useState(false);
   const [chatRequests, setChatRequests] = useState<ChatRequest[]>([]);

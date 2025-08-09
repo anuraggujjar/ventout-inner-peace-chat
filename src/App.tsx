@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { SecurityProvider } from "@/contexts/SecurityContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { SocketProvider } from "@/contexts/SocketContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { SplashScreen } from "@/components/SplashScreen";
 import Index from "./pages/Index";
@@ -42,7 +43,8 @@ const App = () => {
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <SecurityProvider>
           <AuthProvider>
-            <TooltipProvider>
+            <SocketProvider>
+              <TooltipProvider>
               <Toaster />
               <Sonner />
               <BrowserRouter>
@@ -120,7 +122,8 @@ const App = () => {
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>
-            </TooltipProvider>
+              </TooltipProvider>
+            </SocketProvider>
           </AuthProvider>
         </SecurityProvider>
       </ThemeProvider>

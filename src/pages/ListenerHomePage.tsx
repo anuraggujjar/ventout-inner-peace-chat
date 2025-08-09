@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
-import { useSocket } from '@/hooks/useSocket';
+import { useSocketContext } from '@/contexts/SocketContext';
 import { MessageCircle, LogOut, User, Heart, Users, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import TalkerSelection from '@/components/chat/TalkerSelection';
@@ -16,7 +16,7 @@ export const ListenerHomePage: React.FC = () => {
     availableTalkers, 
     currentRoom, 
     partner 
-  } = useSocket();
+  } = useSocketContext();
   const [currentView, setCurrentView] = useState<'dashboard' | 'talker-selection'>('dashboard');
 
   // Listen for active chats

@@ -2,8 +2,10 @@ import axios from 'axios';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import { Preferences } from '@capacitor/preferences';
 import { Capacitor } from '@capacitor/core';
+import { mockAuthService } from './mockAuth';
 
 const API_BASE_URL = 'http://localhost:3000'; // Backend URL
+const USE_MOCK_AUTH = true; // Set to false when you have a real backend
 
 // Google Web Client ID - replace with your actual client ID
 const GOOGLE_WEB_CLIENT_ID = 'YOUR_GOOGLE_WEB_CLIENT_ID.apps.googleusercontent.com';
@@ -194,6 +196,12 @@ class AuthService {
 
   // Email/Password Authentication
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
+    if (USE_MOCK_AUTH) {
+      const authData = await mockAuthService.login(credentials.email, credentials.password);
+      await this.storeAuthData(authData);
+      return authData;
+    }
+    
     try {
       const response = await this.apiClient.post('/auth/login', credentials);
       const authData: AuthResponse = response.data;
@@ -205,6 +213,12 @@ class AuthService {
   }
 
   async register(data: RegisterData): Promise<AuthResponse> {
+    if (USE_MOCK_AUTH) {
+      const authData = await mockAuthService.register(data);
+      await this.storeAuthData(authData);
+      return authData;
+    }
+    
     try {
       const response = await this.apiClient.post('/auth/register', data);
       const authData: AuthResponse = response.data;

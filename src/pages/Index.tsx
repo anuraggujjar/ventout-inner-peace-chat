@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
 import Layout from '@/components/Layout';
 import QuoteCard from '@/components/QuoteCard';
 import { Button } from '@/components/ui/button';
 import { MessageSquare, Video } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
 
 const initialQuotes = [
   {
@@ -101,18 +101,13 @@ const HealingAnimation = () => {
 const Index = () => {
   const [currentQuote, setCurrentQuote] = useState(initialQuotes[0]);
   const navigate = useNavigate();
-  const { isAuthenticated, user } = useAuth();
+  const { user, loading } = useAuth();
 
   useEffect(() => {
-    if (isAuthenticated && user) {
-      // Redirect authenticated users to appropriate home page
-      if (user.role === 'listener') {
-        navigate('/listener/home');
-      } else {
-        navigate('/home');
-      }
+    if (!loading && !user) {
+      navigate('/login');
     }
-  }, [isAuthenticated, user, navigate]);
+  }, [user, loading, navigate]);
 
   const handleRefreshQuote = () => {
     const currentIndex = initialQuotes.findIndex(q => q.quote === currentQuote.quote);
@@ -123,7 +118,7 @@ const Index = () => {
 
   const handleStartTalking = () => {
     console.log("Start Talking clicked");
-    navigate('/auth');
+    navigate('/topic-selection');
   };
 
   return (
@@ -146,17 +141,21 @@ const Index = () => {
             onClick={handleStartTalking}
           >
             <MessageSquare className="mr-2 h-6 w-6" />
-            Get Started
+            Start Talking
           </Button>
-          <p className="text-xs text-muted-foreground mt-[-0.5rem] mb-2">Connect with others in a safe space.</p>
+          <p className="text-xs text-muted-foreground mt-[-0.5rem] mb-2">Connect anonymously with a listener.</p>
           
           <Button 
             size="lg" 
             variant="outline"
-            className="w-full py-3 text-lg rounded-xl shadow-md"
-            onClick={() => navigate('/auth')}
+            className="w-full py-3 text-lg rounded-xl shadow-md relative"
+            disabled
           >
-            Already have an account? Sign In
+            <Video className="mr-2 h-6 w-6" />
+            Video Call
+            <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
+              Coming Soon
+            </span>
           </Button>
         </div>
       </div>

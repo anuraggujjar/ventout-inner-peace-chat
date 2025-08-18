@@ -56,18 +56,7 @@ const VoiceRecorder = ({ isOpen, onClose, onSendVoiceMessage }: VoiceRecorderPro
         const reader = new FileReader();
         reader.onload = () => {
           const base64 = (reader.result as string).split(',')[1];
-          // Use the duration that was set when stopping, not currentTime at this moment
-          const recordingDuration = Math.max(duration, 1);
-          console.log('Audio recording finished:', {
-            duration: recordingDuration,
-            finalDuration: duration,
-            currentTime,
-            audioDataLength: base64.length,
-            type: 'voice'
-          });
-          // Auto-send the audio immediately after recording stops
-          onSendVoiceMessage(base64, recordingDuration);
-          handleClose();
+          setRecordedAudio(base64);
         };
         reader.readAsDataURL(audioBlob);
         
@@ -89,18 +78,11 @@ const VoiceRecorder = ({ isOpen, onClose, onSendVoiceMessage }: VoiceRecorderPro
 
   const stopRecording = () => {
     if (mediaRecorderRef.current && isRecording) {
-      // Store the current recording time before stopping
-      const recordedDuration = currentTime;
-      setDuration(recordedDuration);
-      console.log('Stopping recording, duration:', recordedDuration, 'currentTime:', currentTime);
-      
-      // Stop the recorder (this will trigger onstop event)
       mediaRecorderRef.current.stop();
       setIsRecording(false);
-      
+      setDuration(currentTime);
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
-        intervalRef.current = null;
       }
     }
   };
@@ -190,19 +172,10 @@ const VoiceRecorder = ({ isOpen, onClose, onSendVoiceMessage }: VoiceRecorderPro
         </>
       ) : (
         <>
-          <span className={`text-sm font-mono transition-colors duration-200 ${
-            isPlaying ? 'text-primary font-medium' : 'text-muted-foreground'
-          }`}>
-            {isPlaying ? 'Playing...' : formatTime(duration)}
+          <span className="text-sm font-mono text-muted-foreground">
+            {formatTime(duration)}
           </span>
-          <Button 
-            onClick={playRecording} 
-            variant="outline" 
-            size="icon" 
-            className={`rounded-full transition-all duration-200 ${
-              isPlaying ? 'bg-primary/10 border-primary/30 animate-pulse' : ''
-            }`}
-          >
+          <Button onClick={playRecording} variant="outline" size="icon" className="rounded-full">
             {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
           </Button>
           <Button onClick={resetRecording} variant="outline" size="icon" className="rounded-full">

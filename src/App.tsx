@@ -7,9 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import { SecurityProvider } from "@/contexts/SecurityContext";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { SocketProvider } from "@/contexts/SocketContext";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { AuthProvider } from "@/hooks/useAuth";
 import { SplashScreen } from "@/components/SplashScreen";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -19,10 +17,11 @@ import HistoryPage from "./pages/HistoryPage";
 import TopicSelectionPage from "./pages/TopicSelectionPage";
 import FeelingSelectionPage from "./pages/FeelingSelectionPage";
 import ChatRequestSentPage from "./pages/ChatRequestSentPage";
-import { AuthPage } from "./pages/AuthPage";
-import { HomePage } from "./pages/HomePage";
-import { ListenerHomePage } from "./pages/ListenerHomePage";
-import { TalkerDashboard } from "./pages/TalkerDashboard";
+import LoginPage from "./pages/LoginPage";
+import PostAuthPage from "./pages/PostAuthPage";
+import SelectRolePage from "./pages/SelectRolePage";
+import TalkerHomePage from "./pages/TalkerHomePage";
+import ListenerHomePage from "./pages/ListenerHomePage";
 import './App.css';
 
 const queryClient = new QueryClient();
@@ -42,89 +41,30 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <SecurityProvider>
-          <AuthProvider>
-            <SocketProvider>
-              <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <BrowserRouter>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <AuthProvider>
                 <Routes>
-                  {/* Public Routes */}
                   <Route path="/" element={<Index />} />
-                  <Route path="/auth" element={<AuthPage />} />
-                  
-                  {/* Protected Routes */}
-                  <Route 
-                    path="/home" 
-                    element={
-                      <ProtectedRoute requiredRole="talker">
-                        <TalkerDashboard />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/listener/home" 
-                    element={
-                      <ProtectedRoute requiredRole="listener">
-                        <ListenerHomePage />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/chat" 
-                    element={
-                      <ProtectedRoute>
-                        <ChatPage />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/settings" 
-                    element={
-                      <ProtectedRoute>
-                        <SettingsPage />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/history" 
-                    element={
-                      <ProtectedRoute>
-                        <HistoryPage />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/topic-selection" 
-                    element={
-                      <ProtectedRoute>
-                        <TopicSelectionPage />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/feeling-selection" 
-                    element={
-                      <ProtectedRoute>
-                        <FeelingSelectionPage />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  <Route 
-                    path="/chat-request-sent" 
-                    element={
-                      <ProtectedRoute>
-                        <ChatRequestSentPage />
-                      </ProtectedRoute>
-                    } 
-                  />
-                  
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/post-auth" element={<PostAuthPage />} />
+                  <Route path="/select-role" element={<SelectRolePage />} />
+                  <Route path="/talker/home" element={<TalkerHomePage />} />
+                  <Route path="/listener/home" element={<ListenerHomePage />} />
+                  <Route path="/chat" element={<ChatPage />} />
+                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route path="/history" element={<HistoryPage />} />
+                  <Route path="/topic-selection" element={<TopicSelectionPage />} />
+                  <Route path="/feeling-selection" element={<FeelingSelectionPage />} />
+                  <Route path="/chat-request-sent" element={<ChatRequestSentPage />} />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
-              </BrowserRouter>
-              </TooltipProvider>
-            </SocketProvider>
-          </AuthProvider>
+              </AuthProvider>
+            </BrowserRouter>
+          </TooltipProvider>
         </SecurityProvider>
       </ThemeProvider>
     </QueryClientProvider>

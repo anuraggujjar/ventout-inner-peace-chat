@@ -14,25 +14,9 @@ const AudioMessage = ({ audioData, duration, isCurrentUser }: AudioMessageProps)
   const [currentTime, setCurrentTime] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  console.log('AudioMessage rendering with props:', { 
-    audioDataLength: audioData?.length, 
-    duration, 
-    isCurrentUser 
-  });
-
   const togglePlayback = () => {
     if (!audioRef.current) {
-      // Create audio with proper format specification
-      const audioBlob = new Blob([
-        new Uint8Array(
-          atob(audioData)
-            .split('')
-            .map(char => char.charCodeAt(0))
-        )
-      ], { type: 'audio/webm; codecs=opus' });
-      
-      const audioUrl = URL.createObjectURL(audioBlob);
-      const audio = new Audio(audioUrl);
+      const audio = new Audio(`data:audio/webm;base64,${audioData}`);
       audioRef.current = audio;
       
       audio.ontimeupdate = () => {
@@ -42,19 +26,6 @@ const AudioMessage = ({ audioData, duration, isCurrentUser }: AudioMessageProps)
       audio.onended = () => {
         setIsPlaying(false);
         setCurrentTime(0);
-        URL.revokeObjectURL(audioUrl);
-      };
-      
-      audio.onloadedmetadata = () => {
-        // Update duration from actual audio if available
-        if (audio.duration && audio.duration > 0) {
-          console.log('Audio loaded, actual duration:', audio.duration);
-        }
-      };
-      
-      audio.onerror = (error) => {
-        console.error('Audio error:', error);
-        setIsPlaying(false);
       };
     }
 
@@ -62,10 +33,7 @@ const AudioMessage = ({ audioData, duration, isCurrentUser }: AudioMessageProps)
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
-      audioRef.current.play().catch(error => {
-        console.error('Error playing audio:', error);
-        setIsPlaying(false);
-      });
+      audioRef.current.play();
       setIsPlaying(true);
     }
   };
@@ -76,55 +44,50 @@ const AudioMessage = ({ audioData, duration, isCurrentUser }: AudioMessageProps)
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const progressPercentage = (duration > 0 ? (currentTime / duration) : 0) * 100;
-  const displayDuration = duration > 0 ? duration : 1; // Use minimum 1 second for display
-
-  // Add safety check but be more lenient
-  if (!audioData) {
-    console.error('AudioMessage: No audio data provided');
-    return <div className="text-red-500 text-sm">Error: No audio data</div>;
-  }
-
-  if (duration <= 0) {
-    console.warn('AudioMessage: Invalid duration, using 1 second default', { duration });
-    // Use 1 second as fallback instead of rejecting
-  }
+  const progressPercentage = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className={`flex items-center space-x-2 p-2 rounded-lg max-w-[140px] transition-all duration-300 border ring-1 ${
-      isCurrentUser 
-        ? 'bg-primary/8 border-primary/30 ring-primary/20' 
-        : 'bg-muted/30 border-border/40 ring-border/20'
+    <div className={`flex items-center space-x-3 p-3 rounded-lg min-w-[200px] ${
+      isCurrentUser ? 'bg-primary/10' : 'bg-muted/50'
     }`}>
       <Button 
         onClick={togglePlayback}
-        size="sm"
+        size="icon"
         variant="ghost"
-        className={`rounded-full flex-shrink-0 w-6 h-6 p-0 transition-all duration-200 ${
-          isPlaying ? 'bg-primary text-primary-foreground' : 'hover:bg-primary/20'
+        className={`rounded-full flex-shrink-0 ${
+          isCurrentUser ? 'hover:bg-primary/20' : 'hover:bg-muted'
         }`}
       >
         {isPlaying ? (
-          <Pause className="w-3 h-3" />
+          <Pause className="w-4 h-4" />
         ) : (
-          <Play className="w-3 h-3 ml-px" />
+          <Play className="w-4 h-4" />
         )}
       </Button>
       
-      <div className="flex-1 min-w-0">
+      <div className="flex-1">
+        <div className="flex items-center space-x-2 mb-1">
+          <Volume2 className="w-3 h-3 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground">Voice message</span>
+        </div>
+        
         {/* Progress bar */}
-        <div className="relative h-1 bg-muted/40 rounded-full overflow-hidden">
+        <div className="relative h-1 bg-muted rounded-full overflow-hidden">
           <div 
-            className={`absolute left-0 top-0 h-full transition-all duration-200 rounded-full ${
-              isCurrentUser ? 'bg-primary' : 'bg-primary/70'
+            className={`absolute left-0 top-0 h-full transition-all duration-200 ${
+              isCurrentUser ? 'bg-primary' : 'bg-primary/60'
             }`}
             style={{ width: `${progressPercentage}%` }}
           />
         </div>
         
-        {/* Timer display */}
-        <div className="text-[10px] text-muted-foreground/70 font-mono mt-0.5 text-center">
-          {formatTime(currentTime)} / {formatTime(displayDuration)}
+        <div className="flex justify-between items-center mt-1">
+          <span className="text-xs text-muted-foreground">
+            {formatTime(currentTime)}
+          </span>
+          <span className="text-xs text-muted-foreground">
+            {formatTime(duration)}
+          </span>
         </div>
       </div>
     </div>

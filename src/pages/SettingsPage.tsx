@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
-import { Shield, Bell, Eye, User, Edit3, Save, X, LogOut } from 'lucide-react';
+import { Shield, Bell, Eye, Trash2, User, Edit3, Save, X } from 'lucide-react';
 import { useSecurity } from '@/contexts/SecurityContext';
 import { useToast } from '@/hooks/use-toast';
 
@@ -26,11 +26,11 @@ const SettingsPage = () => {
   const [tempDisplayName, setTempDisplayName] = useState(displayName);
   const [tempBio, setTempBio] = useState(bio);
 
-  const handleLogout = () => {
+  const handleClearData = () => {
     clearSession();
     toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out.",
+      title: "Data Cleared",
+      description: "All local data has been cleared successfully.",
     });
   };
 
@@ -138,26 +138,26 @@ const SettingsPage = () => {
           </CardContent>
         </Card>
 
-        {/* Account */}
+        {/* Data Management */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <LogOut className="h-5 w-5" />
-              <span>Account</span>
+              <Trash2 className="h-5 w-5" />
+              <span>Data Management</span>
             </CardTitle>
-            <CardDescription>Manage your account and session</CardDescription>
+            <CardDescription>Manage your stored data and chat history</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Button 
               variant="destructive" 
-              onClick={handleLogout}
+              onClick={handleClearData}
               className="w-full"
             >
-              <LogOut className="mr-2 h-4 w-4" />
-              Log Out
+              <Trash2 className="mr-2 h-4 w-4" />
+              Clear All Data
             </Button>
             <p className="text-xs text-muted-foreground">
-              Logging out will end your current session and clear all local data.
+              Clearing data will remove all chat history and preferences from this device.
             </p>
           </CardContent>
         </Card>

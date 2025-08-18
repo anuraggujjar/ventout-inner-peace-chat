@@ -41,29 +41,38 @@ const MessageList = ({ messages, userRole, partnerTyping, messagesEndRef }: Mess
             key={msg.id}
             className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
           >
-            <Card className={`max-w-md ${isCurrentUser ? 'bg-primary text-primary-foreground' : ''}`}>
-              <CardContent className="p-4">
+            <Card className={`max-w-lg border-[0.5px] ${isCurrentUser ? 'bg-primary text-primary-foreground border-primary/30 ring-1 ring-primary/10' : 'border-border/40 ring-1 ring-border/5'}`}>
+              <CardContent className="p-2">
                 <div className={`flex items-start space-x-3 ${isCurrentUser ? 'flex-row-reverse space-x-reverse' : ''}`}>
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 ${
                     isCurrentUser 
                       ? 'bg-primary-foreground/20' 
                       : `bg-gradient-to-br from-${roleColor}-500/20 to-${roleColor}-600/20`
                   }`}>
-                    <IconComponent size={16} className={isCurrentUser ? 'text-primary-foreground' : `text-${roleColor}-500`} />
+                    <IconComponent size={12} className={isCurrentUser ? 'text-primary-foreground' : `text-${roleColor}-500`} />
                   </div>
-                  <div className={`flex-1 ${isCurrentUser ? 'text-right' : ''}`}>
-                    <p className={`text-sm font-medium mb-1 ${
-                      isCurrentUser ? 'text-primary-foreground' : 'text-primary'
-                    }`}>
-                      {isCurrentUser ? 'You' : `Anonymous ${getRoleDisplay(msg.sender)}`}
-                    </p>
+                  <div className="flex-1 min-w-0">
+                    <div className={`flex items-center gap-2 mb-1 ${isCurrentUser ? 'flex-row-reverse' : ''}`}>
+                      <p className={`text-xs font-medium ${
+                        isCurrentUser ? 'text-primary-foreground' : 'text-primary'
+                      }`}>
+                        {isCurrentUser ? 'You' : `Anonymous ${getRoleDisplay(msg.sender)}`}
+                      </p>
+                      <p className={`text-xs ${
+                        isCurrentUser ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                      }`}>
+                        {formatTime(msg.timestamp)}
+                      </p>
+                    </div>
                     
                     {msg.type === 'voice' && msg.audioData && msg.duration ? (
-                      <AudioMessage 
-                        audioData={msg.audioData}
-                        duration={msg.duration}
-                        isCurrentUser={isCurrentUser}
-                      />
+                      <div className="w-full">
+                        <AudioMessage 
+                          audioData={msg.audioData}
+                          duration={msg.duration}
+                          isCurrentUser={isCurrentUser}
+                        />
+                      </div>
                     ) : (
                       <p className={`text-sm ${
                         isCurrentUser ? 'text-primary-foreground' : 'text-foreground'
@@ -71,12 +80,6 @@ const MessageList = ({ messages, userRole, partnerTyping, messagesEndRef }: Mess
                         {msg.content}
                       </p>
                     )}
-                    
-                    <p className={`text-xs mt-2 ${
-                      isCurrentUser ? 'text-primary-foreground/70' : 'text-muted-foreground'
-                    }`}>
-                      {formatTime(msg.timestamp)}
-                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -88,8 +91,8 @@ const MessageList = ({ messages, userRole, partnerTyping, messagesEndRef }: Mess
       {/* Partner typing indicator */}
       {partnerTyping && (
         <div className="flex justify-start">
-          <Card className="max-w-md">
-            <CardContent className="p-4">
+          <Card className="max-w-md border-[0.5px] border-border/40 ring-1 ring-border/5">
+            <CardContent className="p-2">
               <div className="flex items-start space-x-3">
                 <div className={`w-8 h-8 rounded-full bg-gradient-to-br from-${getRoleColor(userRole === 'listener' ? 'talker' : 'listener')}-500/20 to-${getRoleColor(userRole === 'listener' ? 'talker' : 'listener')}-600/20 flex items-center justify-center flex-shrink-0`}>
                   {React.createElement(getRoleIcon(userRole === 'listener' ? 'talker' : 'listener'), { size: 16, className: `text-${getRoleColor(userRole === 'listener' ? 'talker' : 'listener')}-500` })}

@@ -117,6 +117,13 @@ const ChatPage = () => {
   };
 
   const handleSendVoiceMessage = (audioData: string, duration: number) => {
+    console.log('handleSendVoiceMessage called with:', {
+      audioDataLength: audioData.length,
+      duration,
+      userRole,
+      currentMessagesCount: messages.length
+    });
+    
     if (connectionStatus === 'connected') {
       const newMessage: Message = {
         id: Date.now().toString(),
@@ -128,7 +135,12 @@ const ChatPage = () => {
         duration
       };
 
-      setMessages(prev => [...prev, newMessage]);
+      console.log('Adding voice message to state:', newMessage);
+      setMessages(prev => {
+        const updated = [...prev, newMessage];
+        console.log('Updated messages array:', updated);
+        return updated;
+      });
 
       // In a real implementation, you would send this voice message through WebSocket
       console.log('Sending voice message:', { 

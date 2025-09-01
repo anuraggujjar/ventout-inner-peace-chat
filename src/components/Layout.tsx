@@ -66,21 +66,23 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {children}
       </main>
 
-      <nav className="sticky bottom-0 left-0 right-0 bg-card border-t border-border shadow-md">
-        <div className="flex justify-around items-center h-16 w-full px-4">
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors duration-200 flex-1 
-                ${location.pathname === item.path ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-            >
-              <item.icon size={24} strokeWidth={location.pathname === item.path ? 2.5 : 2} />
-              <span className="text-xs mt-1">{item.label}</span>
-            </Link>
-          ))}
-        </div>
-      </nav>
+      {location.pathname === '/' && (
+        <nav className="sticky bottom-0 left-0 right-0 bg-card border-t border-border shadow-md">
+          <div className="flex justify-around items-center h-16 w-full px-4">
+            {navItems.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                className={`flex flex-col items-center justify-center p-2 rounded-lg transition-colors duration-200 flex-1 
+                  ${location.pathname === item.path ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+              >
+                <item.icon size={24} strokeWidth={location.pathname === item.path ? 2.5 : 2} />
+                <span className="text-xs mt-1">{item.label}</span>
+              </Link>
+            ))}
+          </div>
+        </nav>
+      )}
     </div>
   );
 };

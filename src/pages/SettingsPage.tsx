@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
-import { Shield, Bell, Eye, User, Edit3, Save, X, LogOut } from 'lucide-react';
+import { Shield, Bell, Eye, User, Edit3, Save, X, LogOut, Mail, MessageCircle, Phone } from 'lucide-react';
 import { useSecurity } from '@/contexts/SecurityContext';
 import { useToast } from '@/hooks/use-toast';
 
@@ -17,7 +17,6 @@ const SettingsPage = () => {
   const { toast } = useToast();
   const [notifications, setNotifications] = useState(true);
   const [analytics, setAnalytics] = useState(false);
-  const [autoDelete, setAutoDelete] = useState(true);
   
   // User profile states
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -33,7 +32,6 @@ const SettingsPage = () => {
       description: "You have been successfully logged out.",
     });
   };
-
 
   const handleSaveProfile = () => {
     setDisplayName(tempDisplayName);
@@ -51,6 +49,10 @@ const SettingsPage = () => {
     setIsEditingProfile(false);
   };
 
+  const handleContactEmail = () => {
+    window.location.href = 'mailto:support@ventout.app';
+  };
+
   return (
     <Layout>
       <div className="max-w-2xl mx-auto py-6 space-y-6">
@@ -58,7 +60,6 @@ const SettingsPage = () => {
           <h1 className="text-3xl font-bold text-foreground mb-2">Settings</h1>
           <p className="text-muted-foreground">Manage your profile, privacy and preferences</p>
         </div>
-
 
         {/* Security Status */}
         <Card>
@@ -120,20 +121,38 @@ const SettingsPage = () => {
                 onCheckedChange={setNotifications}
               />
             </div>
+          </CardContent>
+        </Card>
 
-
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label htmlFor="auto-delete">Auto-delete Messages</Label>
-                <p className="text-sm text-muted-foreground">
-                  Automatically delete messages after 24 hours
+        {/* Contact Us */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Mail className="h-5 w-5" />
+              <span>Contact Us</span>
+            </CardTitle>
+            <CardDescription>Get in touch with our support team</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-4">
+              <Button 
+                variant="outline" 
+                onClick={handleContactEmail}
+                className="w-full justify-start"
+              >
+                <Mail className="mr-2 h-4 w-4" />
+                Email Support
+              </Button>
+              <div className="text-sm text-muted-foreground space-y-2">
+                <p className="flex items-center">
+                  <Mail className="mr-2 h-4 w-4" />
+                  support@ventout.app
+                </p>
+                <p className="flex items-center">
+                  <MessageCircle className="mr-2 h-4 w-4" />
+                  Response time: Within 24 hours
                 </p>
               </div>
-              <Switch
-                id="auto-delete"
-                checked={autoDelete}
-                onCheckedChange={setAutoDelete}
-              />
             </div>
           </CardContent>
         </Card>

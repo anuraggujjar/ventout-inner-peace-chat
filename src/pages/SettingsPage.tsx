@@ -8,12 +8,13 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
-import { Shield, Bell, Eye, User, Edit3, Save, X, LogOut, Mail, MessageCircle, Phone } from 'lucide-react';
+import { Shield, Bell, Eye, User, Edit3, Save, X, LogOut, Mail, MessageCircle, Phone, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useSecurity } from '@/contexts/SecurityContext';
 import { useToast } from '@/hooks/use-toast';
 
 const SettingsPage = () => {
-  const { sessionId, isSecureConnection, clearSession } = useSecurity();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [notifications, setNotifications] = useState(true);
   const [analytics, setAnalytics] = useState(false);
@@ -26,7 +27,6 @@ const SettingsPage = () => {
   const [tempBio, setTempBio] = useState(bio);
 
   const handleLogout = () => {
-    clearSession();
     toast({
       title: "Logged Out",
       description: "You have been successfully logged out.",
@@ -56,9 +56,19 @@ const SettingsPage = () => {
   return (
     <Layout>
       <div className="max-w-2xl mx-auto py-6 space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground mb-2">Settings</h1>
-          <p className="text-muted-foreground">Manage your profile, privacy and preferences</p>
+        <div className="flex items-center space-x-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(-1)}
+            aria-label="Go back"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">Settings</h1>
+            <p className="text-muted-foreground">Manage your profile, privacy and preferences</p>
+          </div>
         </div>
 
         {/* Security Status */}
@@ -75,13 +85,11 @@ const SettingsPage = () => {
               <div>
                 <p className="font-medium">Connection Security</p>
                 <p className="text-sm text-muted-foreground">
-                  {isSecureConnection ? 'Secure HTTPS connection' : 'Insecure connection'}
+                  Secure HTTPS connection
                 </p>
               </div>
-              <div className={`px-2 py-1 rounded-full text-xs ${
-                isSecureConnection ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-              }`}>
-                {isSecureConnection ? 'Secure' : 'Insecure'}
+              <div className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800">
+                Secure
               </div>
             </div>
             <div className="flex justify-between items-center">

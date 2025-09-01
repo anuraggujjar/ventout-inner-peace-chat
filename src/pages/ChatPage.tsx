@@ -22,8 +22,6 @@ const ChatPage = () => {
   const [userRole, setUserRole] = useState<'listener' | 'talker'>('talker');
   const [partnerTyping, setPartnerTyping] = useState(false);
   const [sessionId, setSessionId] = useState<string>('');
-  
-  const { topic, feeling } = location.state || {};
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -168,10 +166,8 @@ const ChatPage = () => {
       sessionDetails: { 
         sessionId,
         userRole,
-        topic, 
-        feeling, 
         messageCount: messages.length 
-      } 
+      }
     });
     
     toast({
@@ -205,8 +201,6 @@ const ChatPage = () => {
           userRole={userRole}
           connectionStatus={connectionStatus}
           sessionId={sessionId}
-          topic={topic}
-          feeling={feeling}
         />
 
         <MessageList

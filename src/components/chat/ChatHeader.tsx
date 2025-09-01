@@ -7,11 +7,9 @@ interface ChatHeaderProps {
   userRole: 'listener' | 'talker';
   connectionStatus: 'connecting' | 'connected' | 'disconnected';
   sessionId: string;
-  topic?: string;
-  feeling?: string;
 }
 
-const ChatHeader = ({ userRole, connectionStatus, sessionId, topic, feeling }: ChatHeaderProps) => {
+const ChatHeader = ({ userRole, connectionStatus, sessionId }: ChatHeaderProps) => {
   const getRoleDisplay = (role: 'listener' | 'talker') => {
     return role === 'listener' ? 'Listener' : 'Talker';
   };
@@ -55,19 +53,7 @@ const ChatHeader = ({ userRole, connectionStatus, sessionId, topic, feeling }: C
           </div>
         </div>
 
-        <div className="text-right space-y-1">
-          <div className="flex items-center space-x-2">
-            {topic && (
-              <Badge variant="secondary" className="text-xs">
-                {topic}
-              </Badge>
-            )}
-            {feeling && (
-              <Badge variant="outline" className="text-xs">
-                {feeling}
-              </Badge>
-            )}
-          </div>
+        <div className="text-right">
           <p className="text-xs text-muted-foreground">
             Session ID: {sessionId.slice(-6)}
           </p>

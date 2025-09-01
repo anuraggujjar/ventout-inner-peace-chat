@@ -66,7 +66,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {children}
       </main>
 
-      {location.pathname === '/' && (
+      {location.pathname !== '/chat' && (
         <nav className="sticky bottom-0 left-0 right-0 bg-card border-t border-border shadow-md">
           <div className="flex justify-around items-center h-16 w-full px-4">
             {navItems.map((item) => (

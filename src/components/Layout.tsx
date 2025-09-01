@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, Settings, Sun, Moon, History as HistoryIcon } from 'lucide-react';
+import { Home, Settings, Sun, Moon, History as HistoryIcon, ArrowLeft } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -45,9 +45,22 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     <div className="flex flex-col min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 max-w-screen-2xl items-center justify-between">
-          <Link to="/" className="flex items-center space-x-2">
-            <span className="font-bold text-primary">VentOut</span>
-          </Link>
+          <div className="flex items-center space-x-2">
+            {location.pathname !== '/' && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate(-1)}
+                aria-label="Go back"
+                className="mr-2"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            )}
+            <Link to="/" className="flex items-center space-x-2">
+              <span className="font-bold text-primary">VentOut</span>
+            </Link>
+          </div>
           <div className="flex items-center space-x-2">
             <Button
               variant="ghost"

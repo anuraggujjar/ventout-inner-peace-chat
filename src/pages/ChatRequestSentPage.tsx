@@ -117,7 +117,7 @@ const ChatRequestSentPage = () => {
           {/* Reassuring message */}
           <div className="bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-blue-950/30 dark:to-purple-950/30 p-6 rounded-lg mb-8">
             <p className="text-sm text-muted-foreground">
-              Please wait while we connect you to a trained listener. 
+              We're connecting you with a real human who genuinely cares and will listen without judgment. 
               Your conversation will be completely anonymous and confidential.
             </p>
           </div>

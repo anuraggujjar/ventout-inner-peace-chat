@@ -4,8 +4,7 @@ import Layout from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MessageCircle, Clock, User, Trash2, Search, ArrowLeft } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { MessageCircle, Clock, User, Trash2, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 
@@ -22,7 +21,6 @@ interface ChatSession {
 const HistoryPage = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');
 
   // Mock data - in a real app this would come from a database
   const [chatHistory] = useState<ChatSession[]>([
@@ -55,10 +53,6 @@ const HistoryPage = () => {
     }
   ]);
 
-  const filteredHistory = chatHistory.filter(session =>
-    session.topic.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    session.listenerName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   const getTopicLabel = (topic: string) => {
     const topicMap: { [key: string]: string } = {
@@ -126,25 +120,14 @@ const HistoryPage = () => {
           </div>
         </div>
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by topic or listener name..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-
         {/* History List */}
-        {filteredHistory.length === 0 ? (
+        {chatHistory.length === 0 ? (
           <Card>
             <CardContent className="text-center py-12">
               <MessageCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-semibold mb-2">No chat history found</h3>
               <p className="text-muted-foreground mb-4">
-                {searchTerm ? 'No sessions match your search criteria.' : 'Start your first conversation to see it here.'}
+                Start your first conversation to see it here.
               </p>
               <Button onClick={() => window.location.href = '/topic-selection'}>
                 Start New Chat
@@ -153,7 +136,7 @@ const HistoryPage = () => {
           </Card>
         ) : (
           <div className="space-y-4">
-            {filteredHistory.map((session) => (
+            {chatHistory.map((session) => (
               <Card key={session.id} className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">

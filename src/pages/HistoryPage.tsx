@@ -109,7 +109,7 @@ const HistoryPage = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/')}
             aria-label="Go back"
           >
             <ArrowLeft className="h-5 w-5" />

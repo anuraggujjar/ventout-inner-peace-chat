@@ -53,11 +53,6 @@ const ChatHeader = ({ userRole, connectionStatus, sessionId }: ChatHeaderProps) 
           </div>
         </div>
 
-        <div className="text-right">
-          <p className="text-xs text-muted-foreground">
-            Session ID: {sessionId.slice(-6)}
-          </p>
-        </div>
       </div>
     </div>
   );

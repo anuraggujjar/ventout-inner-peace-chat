@@ -70,7 +70,6 @@ const UserProfile = () => {
         <DropdownMenuContent align="end" className="w-56 bg-background border border-border shadow-lg">
           <div className="px-3 py-2">
             <p className="text-sm font-medium text-foreground">{displayName}</p>
-            <p className="text-xs text-muted-foreground truncate">Session: {sessionId.slice(-8)}</p>
           </div>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleOpenProfile} className="cursor-pointer">
@@ -88,7 +87,7 @@ const UserProfile = () => {
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive">
             <LogOut className="mr-2 h-4 w-4" />
-            Clear Session
+            Logout
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -128,13 +127,7 @@ const UserProfile = () => {
                 {tempBio.length}/500 characters
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-4 pt-2">
-              <div>
-                <p className="text-sm font-medium">Session ID</p>
-                <p className="text-xs text-muted-foreground font-mono">
-                  {sessionId.slice(-12)}...
-                </p>
-              </div>
+            <div className="pt-2">
               <div>
                 <p className="text-sm font-medium">Member Since</p>
                 <p className="text-xs text-muted-foreground">

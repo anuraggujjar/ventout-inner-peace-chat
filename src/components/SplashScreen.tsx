@@ -23,7 +23,7 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
   return (
     <div className={`fixed inset-0 z-50 flex items-center justify-center transition-all duration-700 ease-in-out ${
       isAnimating 
-        ? 'bg-gradient-to-br from-primary/20 via-background to-secondary/20 opacity-100' 
+        ? 'bg-gradient-to-br from-primary/10 via-background to-secondary/10 opacity-100' 
         : 'bg-background opacity-0'
     }`}>
       {/* Floating particles */}
@@ -31,7 +31,7 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
         {[...Array(12)].map((_, i) => (
           <div
             key={i}
-            className={`absolute w-2 h-2 bg-primary/30 rounded-full animate-bounce ${
+            className={`absolute w-2 h-2 bg-primary/20 rounded-full animate-bounce ${
               showContent ? 'opacity-100' : 'opacity-0'
             }`}
             style={{
@@ -51,7 +51,7 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
             ? 'translate-y-0 scale-100 opacity-100' 
             : 'translate-y-8 scale-75 opacity-0'
         }`}>
-          <h1 className="text-7xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent animate-pulse">
+          <h1 className="text-7xl font-bold bg-gradient-to-r from-primary/80 via-secondary/80 to-accent/80 bg-clip-text text-transparent animate-pulse">
             VentOut
           </h1>
           

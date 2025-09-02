@@ -19,8 +19,12 @@ const UserProfile = () => {
   
   // Profile state
   const [displayName, setDisplayName] = useState('Anonymous User');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [bio, setBio] = useState('Welcome to my mental health journey. I\'m here to find support and share experiences in a safe space.');
   const [tempDisplayName, setTempDisplayName] = useState(displayName);
+  const [tempEmail, setTempEmail] = useState(email);
+  const [tempPhone, setTempPhone] = useState(phone);
   const [tempBio, setTempBio] = useState(bio);
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
 
@@ -35,6 +39,8 @@ const UserProfile = () => {
 
   const handleSaveProfile = () => {
     setDisplayName(tempDisplayName);
+    setEmail(tempEmail);
+    setPhone(tempPhone);
     setBio(tempBio);
     setIsProfileDialogOpen(false);
     toast({
@@ -45,12 +51,16 @@ const UserProfile = () => {
 
   const handleCancelEdit = () => {
     setTempDisplayName(displayName);
+    setTempEmail(email);
+    setTempPhone(phone);
     setTempBio(bio);
     setIsProfileDialogOpen(false);
   };
 
   const handleOpenProfile = () => {
     setTempDisplayName(displayName);
+    setTempEmail(email);
+    setTempPhone(phone);
     setTempBio(bio);
     setIsProfileDialogOpen(true);
   };
@@ -111,6 +121,26 @@ const UserProfile = () => {
                 value={tempDisplayName}
                 onChange={(e) => setTempDisplayName(e.target.value)}
                 placeholder="Enter your display name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="dialog-email">Email</Label>
+              <Input
+                id="dialog-email"
+                type="email"
+                value={tempEmail}
+                onChange={(e) => setTempEmail(e.target.value)}
+                placeholder="Enter your email address"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="dialog-phone">Phone Number</Label>
+              <Input
+                id="dialog-phone"
+                type="tel"
+                value={tempPhone}
+                onChange={(e) => setTempPhone(e.target.value)}
+                placeholder="Enter your phone number"
               />
             </div>
             <div className="space-y-2">

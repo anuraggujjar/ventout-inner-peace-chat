@@ -200,9 +200,8 @@ const SettingsPage = () => {
               Plaro provides a safe, anonymous space for mental health support where you can freely express your thoughts and feelings. 
               Connect with caring listeners or become a listener yourself to help others on their journey.
             </p>
-            <div className="text-xs text-muted-foreground space-y-1">
-              <p>Version: 1.0.0</p>
-              <p>Last Updated: {new Date().toLocaleDateString()}</p>
+            <div className="text-xs text-muted-foreground">
+              <p>© 2025</p>
             </div>
           </CardContent>
         </Card>

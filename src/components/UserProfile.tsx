@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -11,6 +11,7 @@ import { User, Settings, LogOut, Shield, Edit3, Save, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSecurity } from '@/contexts/SecurityContext';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 
 const UserProfile = () => {
   const navigate = useNavigate();
@@ -23,10 +24,20 @@ const UserProfile = () => {
   const [phone, setPhone] = useState('');
   const [bio, setBio] = useState('Welcome to my mental health journey. I\'m here to find support and share experiences in a safe space.');
   const [tempDisplayName, setTempDisplayName] = useState(displayName);
-  const [tempEmail, setTempEmail] = useState(email);
-  const [tempPhone, setTempPhone] = useState(phone);
   const [tempBio, setTempBio] = useState(bio);
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
+
+  // Fetch user data from Supabase auth
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setEmail(user.email || '');
+        setPhone(user.phone || '');
+      }
+    };
+    fetchUserData();
+  }, []);
 
   const handleLogout = () => {
     clearSession();
@@ -39,8 +50,6 @@ const UserProfile = () => {
 
   const handleSaveProfile = () => {
     setDisplayName(tempDisplayName);
-    setEmail(tempEmail);
-    setPhone(tempPhone);
     setBio(tempBio);
     setIsProfileDialogOpen(false);
     toast({
@@ -51,16 +60,12 @@ const UserProfile = () => {
 
   const handleCancelEdit = () => {
     setTempDisplayName(displayName);
-    setTempEmail(email);
-    setTempPhone(phone);
     setTempBio(bio);
     setIsProfileDialogOpen(false);
   };
 
   const handleOpenProfile = () => {
     setTempDisplayName(displayName);
-    setTempEmail(email);
-    setTempPhone(phone);
     setTempBio(bio);
     setIsProfileDialogOpen(true);
   };
@@ -128,20 +133,24 @@ const UserProfile = () => {
               <Input
                 id="dialog-email"
                 type="email"
-                value={tempEmail}
-                onChange={(e) => setTempEmail(e.target.value)}
-                placeholder="Enter your email address"
+                value={email}
+                readOnly
+                className="bg-muted"
+                placeholder="No email provided"
               />
+              <p className="text-xs text-muted-foreground">Email cannot be changed</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="dialog-phone">Phone Number</Label>
               <Input
                 id="dialog-phone"
                 type="tel"
-                value={tempPhone}
-                onChange={(e) => setTempPhone(e.target.value)}
-                placeholder="Enter your phone number"
+                value={phone}
+                readOnly
+                className="bg-muted"
+                placeholder="No phone provided"
               />
+              <p className="text-xs text-muted-foreground">Phone cannot be changed</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="dialog-bio">Bio</Label>

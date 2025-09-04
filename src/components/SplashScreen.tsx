@@ -52,7 +52,7 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
             : 'translate-y-8 scale-75 opacity-0'
         }`}>
           <h1 className="text-7xl font-bold bg-gradient-to-r from-primary/80 via-secondary/80 to-accent/80 bg-clip-text text-transparent animate-pulse">
-            VentOut
+            Plaro
           </h1>
           
           {/* Decorative elements */}

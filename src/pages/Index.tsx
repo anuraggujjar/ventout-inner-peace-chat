@@ -117,7 +117,7 @@ const Index = () => {
     <Layout>
       <div className="flex flex-col items-center justify-center text-center py-8">
         <HealingAnimation />
-        <h1 className="text-4xl font-bold text-primary mb-2">VentOut</h1>
+        <h1 className="text-4xl font-bold text-primary mb-2">Plaro</h1>
         <p className="text-muted-foreground mb-8">Your safe space to be heard.</p>
 
         <QuoteCard

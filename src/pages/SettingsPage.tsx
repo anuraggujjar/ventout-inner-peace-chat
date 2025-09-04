@@ -50,7 +50,7 @@ const SettingsPage = () => {
   };
 
   const handleContactEmail = () => {
-    window.location.href = 'mailto:support@ventout.app';
+    window.location.href = 'mailto:support@plaro.app';
   };
 
   return (
@@ -154,7 +154,7 @@ const SettingsPage = () => {
               <div className="text-sm text-muted-foreground space-y-2">
                 <p className="flex items-center">
                   <Mail className="mr-2 h-4 w-4" />
-                  support@ventout.app
+                  support@plaro.app
                 </p>
                 <p className="flex items-center">
                   <MessageCircle className="mr-2 h-4 w-4" />
@@ -192,12 +192,12 @@ const SettingsPage = () => {
         {/* Information */}
         <Card>
           <CardHeader>
-            <CardTitle>About VentOut</CardTitle>
+            <CardTitle>About Plaro</CardTitle>
             <CardDescription>Your safe space to be heard</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground mb-4">
-              VentOut provides a safe, anonymous space for mental health support where you can freely express your thoughts and feelings. 
+              Plaro provides a safe, anonymous space for mental health support where you can freely express your thoughts and feelings. 
               Connect with caring listeners or become a listener yourself to help others on their journey.
             </p>
             <div className="text-xs text-muted-foreground space-y-1">

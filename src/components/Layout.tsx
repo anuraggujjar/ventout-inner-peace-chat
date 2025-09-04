@@ -47,7 +47,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="container flex h-14 max-w-screen-2xl items-center justify-between">
           <div className="flex items-center space-x-2">
             <Link to="/" className="flex items-center space-x-2">
-              <span className="font-bold text-primary">VentOut</span>
+              <span className="font-bold text-primary">Plaro</span>
             </Link>
           </div>
           <div className="flex items-center space-x-2">

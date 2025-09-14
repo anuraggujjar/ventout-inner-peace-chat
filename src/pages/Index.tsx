@@ -4,6 +4,7 @@ import Layout from '@/components/Layout';
 import QuoteCard from '@/components/QuoteCard';
 import { Button } from '@/components/ui/button';
 import { MessageSquare, Video } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const initialQuotes = [
   {
@@ -100,6 +101,28 @@ const HealingAnimation = () => {
 const Index = () => {
   const [currentQuote, setCurrentQuote] = useState(initialQuotes[0]);
   const navigate = useNavigate();
+  const { isAuthenticated, isLoading } = useAuth();
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      navigate('/auth');
+    }
+  }, [isAuthenticated, isLoading, navigate]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null; // Will redirect to auth page
+  }
 
   const handleRefreshQuote = () => {
     const currentIndex = initialQuotes.findIndex(q => q.quote === currentQuote.quote);

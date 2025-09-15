@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -18,7 +17,9 @@ import HistoryPage from "./pages/HistoryPage";
 import TopicSelectionPage from "./pages/TopicSelectionPage";
 import FeelingSelectionPage from "./pages/FeelingSelectionPage";
 import ChatRequestSentPage from "./pages/ChatRequestSentPage";
-import { ListenerHomePage } from "./pages/ListenerHomePage";
+import ListenerHomePage from "./pages/ListenerHomePage";
+import TalkerListPage from "./pages/TalkerListPage"; 
+import LiveChatPage from "./pages/LiveChatPage";
 import './App.css';
 
 const queryClient = new QueryClient();
@@ -47,6 +48,8 @@ const App = () => {
                   <Route path="/" element={<Index />} />
                   <Route path="/auth" element={<AuthPage />} />
                   <Route path="/listener/home" element={<ListenerHomePage />} />
+                  <Route path="/talker-list" element={<TalkerListPage />} />
+                  <Route path="/live-chat/:talkerId" element={<LiveChatPage />} />
                   <Route path="/chat" element={<ChatPage />} />
                   <Route path="/settings" element={<SettingsPage />} />
                   <Route path="/history" element={<HistoryPage />} />

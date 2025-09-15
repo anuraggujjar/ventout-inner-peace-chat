@@ -1,145 +1,113 @@
-import React from 'react';
-import Layout from '@/components/Layout';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { MessageCircle, Clock, Users, Settings } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Headphones, Moon, Sun, User, Home, History, Settings } from "lucide-react";
+import QuoteCard from "@/components/QuoteCard";
+import { useState } from "react";
 
-export const ListenerHomePage: React.FC = () => {
-  const { user } = useAuth();
+const ListenerHomePage = () => {
+  const navigate = useNavigate();
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
+    document.documentElement.classList.toggle('dark');
+  };
 
   return (
-    <Layout>
-      <div className="container mx-auto px-4 py-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
-            Welcome back, {user?.name || 'Listener'}
-          </h1>
-          <p className="text-muted-foreground">
-            Ready to make a difference in someone's day?
-          </p>
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Header */}
+      <header className="relative z-10 flex items-center justify-between p-6">
+        <h1 className="text-2xl font-bold text-primary">VentOut</h1>
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={toggleDarkMode}
+            className="p-2 rounded-full bg-muted hover:bg-muted/80 transition-colors"
+          >
+            {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </button>
+          <button 
+            onClick={() => navigate("/settings")}
+            className="p-2 rounded-full bg-primary/10 text-primary"
+          >
+            <User className="w-5 h-5" />
+          </button>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="relative z-10 flex flex-col items-center px-6 pt-8 pb-24">
+        {/* Logo Section */}
+        <div className="text-center mb-8">
+          <h2 className="text-5xl font-bold text-primary mb-4">VentOut</h2>
+          <p className="text-xl text-muted-foreground">Your safe space to be heard.</p>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Chats</CardTitle>
-              <MessageCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">
-                No active conversations
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Sessions Today</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">
-                Total sessions completed
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">People Helped</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">0</div>
-              <p className="text-xs text-muted-foreground">
-                Lives touched
-              </p>
-            </CardContent>
-          </Card>
+        {/* Quote Card */}
+        <div className="w-full max-w-md mb-12">
+          <QuoteCard 
+            quote="Every person you meet is fighting a battle you know nothing about. Be kind. Always."
+            author="Anonymous"
+            onRefresh={() => {}}
+          />
         </div>
 
-        {/* Available Requests */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageCircle className="h-5 w-5" />
-              Available Chat Requests
-            </CardTitle>
-            <CardDescription>
-              People are waiting for someone to listen
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-center py-8">
-              <div className="mb-4">
-                <div className="w-16 h-16 mx-auto rounded-full bg-muted flex items-center justify-center">
-                  <MessageCircle className="h-8 w-8 text-muted-foreground" />
-                </div>
-              </div>
-              <h3 className="text-lg font-semibold mb-2">No pending requests</h3>
-              <p className="text-muted-foreground mb-4">
-                Check back soon for people who need support
-              </p>
-              <Button variant="outline">
-                Refresh Requests
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Action Buttons */}
+        <div className="w-full max-w-sm space-y-6">
+          <div className="text-center space-y-4">
+            <Button
+              size="lg"
+              className="w-full text-primary-foreground rounded-3xl py-6 text-lg font-medium"
+              onClick={() => navigate("/talker-list")}
+            >
+              <Headphones className="w-5 h-5 mr-2" />
+              Be a Listener
+            </Button>
+            <p className="text-sm text-muted-foreground">
+              Help others by listening with compassion.
+            </p>
+          </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Profile Settings</CardTitle>
-              <CardDescription>
-                Update your listening preferences and availability
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <p className="font-medium">Availability Status</p>
-                  <p className="text-sm text-muted-foreground">Currently available for new chats</p>
-                </div>
-                <Badge variant="secondary" className="bg-green-100 text-green-800">
-                  Available
-                </Badge>
-              </div>
-              <Button variant="outline" className="w-full">
-                <Settings className="mr-2 h-4 w-4" />
-                Manage Profile
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Support Resources</CardTitle>
-              <CardDescription>
-                Guidelines and resources for effective listening
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Button variant="ghost" className="w-full justify-start">
-                📋 Listening Guidelines
-              </Button>
-              <Button variant="ghost" className="w-full justify-start">
-                🆘 Crisis Intervention Protocol
-              </Button>
-              <Button variant="ghost" className="w-full justify-start">
-                💬 Communication Best Practices
-              </Button>
-            </CardContent>
-          </Card>
+          <div className="text-center space-y-4">
+            <Button
+              size="lg"
+              variant="secondary"
+              className="w-full rounded-3xl py-4 text-base font-medium"
+              onClick={() => navigate("/topic-selection")}
+            >
+              Start Talking
+            </Button>
+          </div>
         </div>
-      </div>
-    </Layout>
+      </main>
+
+      {/* Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border z-50">
+        <div className="flex items-center justify-around py-4">
+          <button 
+            onClick={() => navigate("/listener/home")}
+            className="flex flex-col items-center space-y-1 text-primary p-2 rounded-xl"
+          >
+            <Home className="w-6 h-6" />
+            <span className="text-xs font-medium">Home</span>
+          </button>
+          <button 
+            onClick={() => navigate("/history")}
+            className="flex flex-col items-center space-y-1 text-muted-foreground p-2 rounded-xl hover:text-primary transition-colors"
+          >
+            <History className="w-6 h-6" />
+            <span className="text-xs">History</span>
+          </button>
+          <button 
+            onClick={() => navigate("/settings")}
+            className="flex flex-col items-center space-y-1 text-muted-foreground p-2 rounded-xl hover:text-primary transition-colors"
+          >
+            <Settings className="w-6 h-6" />
+            <span className="text-xs">Settings</span>
+          </button>
+        </div>
+      </nav>
+    </div>
   );
 };
+
+export default ListenerHomePage;

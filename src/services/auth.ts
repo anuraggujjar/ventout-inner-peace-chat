@@ -1,13 +1,28 @@
-import { supabase } from '@/integrations/supabase/client';
+import axios from 'axios';
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
+import { Preferences } from '@capacitor/preferences';
+import { Capacitor } from '@capacitor/core';
+import { jwtDecode } from 'jwt-decode';
+
+const API_BASE_URL = 'https://ventoutserver.onrender.com';
+
+const GOOGLE_WEB_CLIENT_ID = ' ';
 
 export interface User {
   id: string;
+  _id?: string;
+  role: 'listener' | 'talker';
   email: string;
   name?: string;
-  role: 'talker' | 'listener';
+  phone?: string;
   bio?: string;
   interests?: string[];
-  createdAt: string;
+}
+
+export interface AuthResponse {
+  user: User;
+  token: string;
+  refreshToken: string;
 }
 
 export interface LoginCredentials {
@@ -19,179 +34,300 @@ export interface RegisterData {
   name: string;
   email: string;
   password: string;
-  role: 'talker' | 'listener';
-  bio?: string;
+  role: 'listener' | 'talker';
   interests?: string[];
+  bio?: string;
 }
 
-export interface PhoneOTPData {
+export interface OTPSendData {
   phone: string;
 }
 
-export interface VerifyOTPData {
+export interface OTPVerifyData {
   phone: string;
   code: string;
 }
 
-export interface AuthResponse {
-  user: User;
-  session: any;
-}
-
 class AuthService {
-  private readonly STORAGE_KEY = 'auth_user';
+  private apiClient = axios.create({
+    baseURL: API_BASE_URL,
+    timeout: 10000,
+  });
 
-  async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: credentials.email,
-      password: credentials.password,
-    });
+  // This promise prevents multiple refresh calls from running at once.
+  private isRefreshingPromise: Promise<string | null> | null = null;
+  private googleGisReady = false;
 
-    if (error) throw error;
-    if (!data.user) throw new Error('No user returned');
-
-    const user = await this.fetchUserProfile(data.user.id);
-    this.storeUser(user);
-
-    return { user, session: data.session };
+  constructor() {
+    this.setupInterceptors();
+    this.initializeGoogleAuth();
   }
 
-  async register(registerData: RegisterData): Promise<AuthResponse> {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { data, error } = await supabase.auth.signUp({
-      email: registerData.email,
-      password: registerData.password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          display_name: registerData.name,
-          role: registerData.role,
-        }
-      }
-    });
-
-    if (error) throw error;
-    if (!data.user) throw new Error('No user returned');
-
-    // Create user profile
-    const { error: profileError } = await supabase
-      .from('user_profiles')
-      .insert({
-        id: data.user.id,
-        display_name: registerData.name,
-        role: registerData.role,
+  private async initializeGoogleAuth() {
+    if (Capacitor.isNativePlatform()) {
+      await GoogleAuth.initialize({
+        clientId: GOOGLE_WEB_CLIENT_ID,
+        scopes: ['profile', 'email'],
+        grantOfflineAccess: true,
       });
+    } else {
+      await this.loadGoogleGisSDK();
+    }
+  }
 
-    if (profileError) throw profileError;
+  private loadGoogleGisSDK(): Promise<void> {
+    return new Promise((resolve) => {
+      const script = document.createElement('script');
+      script.src = 'https://accounts.google.com/gsi/client';
+      script.onload = () => {
+        this.googleGisReady = true;
+        resolve();
+      };
+      script.onerror = () => {
+        console.error("Failed to load Google Identity Services SDK.");
+        resolve();
+      }
+      document.head.appendChild(script);
+    });
+  }
 
-    const user = await this.fetchUserProfile(data.user.id);
-    this.storeUser(user);
+  public async getToken(): Promise<string | null> {
+    // If a refresh is already in progress, all subsequent calls wait for it.
+    if (this.isRefreshingPromise) {
+        console.log('Refresh already in progress, waiting for it to resolve.');
+        return await this.isRefreshingPromise;
+    }
 
-    return { user, session: data.session };
+    let accessToken = await this.getStoredToken();
+
+    if (!accessToken) {
+        return null;
+    }
+
+    try {
+        const decodedToken: { exp: number } = jwtDecode(accessToken);
+        const currentTime = Date.now() / 1000;
+
+        if (decodedToken.exp > currentTime + 300) {
+            return accessToken;
+        }
+
+        console.log('Access token is expired or close to expiration. Attempting to refresh...');
+
+        // Start the refresh and store the promise.
+        this.isRefreshingPromise = this.refreshAccessToken();
+        
+        const newToken = await this.isRefreshingPromise;
+        // The refresh is complete, so we clear the promise.
+        this.isRefreshingPromise = null;
+        return newToken;
+
+    } catch (error) {
+        console.error('Invalid token found in storage or refresh failed. Logging out.');
+        this.logout();
+        this.isRefreshingPromise = null; // Also clear the promise on error
+        return null;
+    }
+  }
+
+  private async refreshAccessToken(): Promise<string | null> {
+    try {
+        const refreshToken = await this.getStoredRefreshToken();
+        if (!refreshToken) {
+            return null;
+        }
+
+        const response = await this.apiClient.post('/auth/refresh', {
+            refreshToken,
+        });
+
+        const { token: newAccessToken, refreshToken: newRefreshToken } = response.data;
+        await this.storeToken(newAccessToken);
+        await Preferences.set({ key: 'refresh_token', value: newRefreshToken });
+
+        return newAccessToken;
+    } catch (error) {
+        console.error('Failed to refresh access token:', error);
+        return null;
+    }
+  }
+  
+  private setupInterceptors() {
+    this.apiClient.interceptors.request.use(
+        async (config) => {
+            const token = await this.getToken();
+            if (token) {
+                config.headers.Authorization = `Bearer ${token}`;
+            }
+            return config;
+        },
+        (error) => Promise.reject(error)
+    );
   }
 
   async googleLogin(): Promise<AuthResponse> {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/`,
+    try {
+      if (Capacitor.isNativePlatform()) {
+        const googleUser = await GoogleAuth.signIn();
+        
+        if (!googleUser.authentication?.idToken) {
+          throw new Error('Failed to get Google ID token from native auth');
+        }
+        
+        const idToken = googleUser.authentication.idToken;
+
+        const response = await this.apiClient.post('/auth/google/callback', {
+          tokenId: idToken,
+        });
+        
+        const authData: AuthResponse = response.data;
+        await this.storeAuthData(authData);
+        
+        return authData;
+      } else {
+        if (!this.googleGisReady) {
+          throw new Error('Google Identity Services SDK is not loaded.');
+        }
+
+        return new Promise((resolve, reject) => {
+          const client = google.accounts.oauth2.initCodeClient({
+            client_id: GOOGLE_WEB_CLIENT_ID,
+            scope: 'openid email profile',
+            ux_mode: 'popup',
+            callback: async (response: any) => {
+              if (response.error) {
+                reject(new Error(`Google login failed: ${response.error} - ${response.error_description}`));
+                return;
+              }
+              try {
+                const apiResponse = await this.apiClient.post('/auth/google/callback', {
+                  code: response.code,
+                });
+                
+                const authData: AuthResponse = apiResponse.data;
+                await this.storeAuthData(authData);
+                resolve(authData);
+
+              } catch (error: any) {
+                reject(new Error(error.response?.data?.message || 'Google login failed'));
+              }
+            },
+          });
+          client.requestCode();
+        });
       }
-    });
-
-    if (error) throw error;
-
-    // This will be handled by the auth state change listener
-    throw new Error('Google login initiated - redirect in progress');
+    } catch (error: any) {
+      console.error('Google login error:', error);
+      throw new Error(error.message || 'Google login failed');
+    }
   }
 
-  async sendOTP(phoneData: PhoneOTPData): Promise<void> {
-    const { error } = await supabase.auth.signInWithOtp({
-      phone: phoneData.phone,
-    });
-
-    if (error) throw error;
+  async login(credentials: LoginCredentials): Promise<AuthResponse> {
+    try {
+      const response = await this.apiClient.post('/auth/login', credentials);
+      const authData: AuthResponse = response.data;
+      await this.storeAuthData(authData);
+      return authData;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Login failed');
+    }
   }
 
-  async verifyOTP(verifyData: VerifyOTPData): Promise<AuthResponse> {
-    const { data, error } = await supabase.auth.verifyOtp({
-      phone: verifyData.phone,
-      token: verifyData.code,
-      type: 'sms',
-    });
-
-    if (error) throw error;
-    if (!data.user) throw new Error('No user returned');
-
-    const user = await this.fetchUserProfile(data.user.id);
-    this.storeUser(user);
-
-    return { user, session: data.session };
+  async register(data: RegisterData): Promise<AuthResponse> {
+    try {
+      const response = await this.apiClient.post('/auth/register', data);
+      const authData: AuthResponse = response.data;
+      await this.storeAuthData(authData);
+      return authData;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Registration failed');
+    }
   }
 
-  async logout(): Promise<void> {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+  async sendOTP(data: OTPSendData): Promise<{ success: boolean; message: string }> {
+    try {
+      const response = await this.apiClient.post('/auth/otp/send', data);
+      return response.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'Failed to send OTP');
+    }
+  }
+
+  async verifyOTP(data: OTPVerifyData): Promise<AuthResponse> {
+    try {
+      const response = await this.apiClient.post('/auth/otp/verify', data);
+      const authData: AuthResponse = response.data;
+      await this.storeAuthData(authData);
+      return authData;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || 'OTP verification failed');
+    }
+  }
+
+  private async storeAuthData(authData: AuthResponse): Promise<void> {
+    const userToStore = {
+      ...authData.user,
+      id: authData.user.id || authData.user._id,
+    };
     
-    localStorage.removeItem(this.STORAGE_KEY);
+    await Promise.all([
+      Preferences.set({ key: 'auth_token', value: authData.token }),
+      Preferences.set({ key: 'refresh_token', value: authData.refreshToken }),
+      Preferences.set({ key: 'user_data', value: JSON.stringify(userToStore) }),
+    ]);
   }
 
-  async isAuthenticated(): Promise<boolean> {
-    const { data: { session } } = await supabase.auth.getSession();
-    return !!session;
+  private async storeToken(token: string): Promise<void> {
+    await Preferences.set({ key: 'auth_token', value: token });
+  }
+
+  async getStoredToken(): Promise<string | null> {
+    const result = await Preferences.get({ key: 'auth_token' });
+    return result.value;
+  }
+
+  private async getStoredRefreshToken(): Promise<string | null> {
+    const result = await Preferences.get({ key: 'refresh_token' });
+    return result.value;
   }
 
   async getStoredUser(): Promise<User | null> {
-    const stored = localStorage.getItem(this.STORAGE_KEY);
-    if (!stored) return null;
-
     try {
-      return JSON.parse(stored);
+      const result = await Preferences.get({ key: 'user_data' });
+      return result.value ? JSON.parse(result.value) : null;
     } catch {
       return null;
     }
   }
 
-  private async fetchUserProfile(userId: string): Promise<User> {
-    const { data: profile, error } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-
-    if (error) throw error;
-    if (!profile) throw new Error('Profile not found');
-
-    return {
-      id: profile.id,
-      email: '', // Will be filled by auth state change
-      name: profile.display_name,
-      role: profile.role as 'talker' | 'listener',
-      createdAt: profile.created_at,
-    };
+  async clearTokens(): Promise<void> {
+    await Promise.all([
+      Preferences.remove({ key: 'auth_token' }),
+      Preferences.remove({ key: 'refresh_token' }),
+      Preferences.remove({ key: 'user_data' }),
+    ]);
   }
 
-  private storeUser(user: User): void {
-    localStorage.setItem(this.STORAGE_KEY, JSON.stringify(user));
-  }
-
-  // Handle auth state changes
-  onAuthStateChange(callback: (user: User | null) => void) {
-    return supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        this.fetchUserProfile(session.user.id)
-          .then(user => {
-            user.email = session.user.email || '';
-            this.storeUser(user);
-            callback(user);
-          })
-          .catch(console.error);
-      } else if (event === 'SIGNED_OUT') {
-        localStorage.removeItem(this.STORAGE_KEY);
-        callback(null);
+  async logout(): Promise<void> {
+    await this.clearTokens();
+    try {
+      if (Capacitor.isNativePlatform()) {
+        await GoogleAuth.signOut();
+      } else {
+        if (typeof google !== 'undefined' && google.accounts.id) {
+          google.accounts.id.disableAutoSelect();
+        }
       }
-    });
+    } catch {
+      // Ignore Google signout errors
+    }
   }
+
+  async isAuthenticated(): Promise<boolean> {
+    const token = await this.getToken();
+    return !!token;
+  }
+
 }
 
 export const authService = new AuthService();

@@ -27,12 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const initializeAuth = async () => {
     try {
-      // Set up auth state listener first
-      const { data: { subscription } } = authService.onAuthStateChange((user) => {
-        setUser(user);
-      });
-
-      // Then check for existing session
+      // Check for existing session
       const [isAuth, storedUser] = await Promise.all([
         authService.isAuthenticated(),
         authService.getStoredUser(),
@@ -41,8 +36,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (isAuth && storedUser) {
         setUser(storedUser);
       }
-
-      return () => subscription.unsubscribe();
     } catch (error) {
       console.error('Error initializing auth:', error);
     } finally {

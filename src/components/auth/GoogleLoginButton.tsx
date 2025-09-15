@@ -15,19 +15,27 @@ export const GoogleLoginButton: React.FC = () => {
   const handleGoogleLogin = async () => {
     setIsLoading(true);
     try {
-      await authService.googleLogin();
-      // The redirect will be handled by Supabase
-    } catch (error) {
-      if (error instanceof Error && error.message.includes('redirect in progress')) {
-        // This is expected for Google OAuth flow
-        return;
-      }
+      const authData = await authService.googleLogin();
+      await refreshUser();
       
+      toast({
+        title: "Login successful",
+        description: `Welcome back, ${authData.user.name || authData.user.email}!`,
+      });
+
+      // Navigate based on role
+      if (authData.user.role === 'listener') {
+        navigate('/listener/home');
+      } else {
+        navigate('/topic-selection');
+      }
+    } catch (error) {
       toast({
         title: "Google login failed",
         description: error instanceof Error ? error.message : "Please try again",
         variant: "destructive",
       });
+    } finally {
       setIsLoading(false);
     }
   };

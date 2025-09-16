@@ -1,35 +1,84 @@
+// Privacy and input sanitization utilities
 
-// Privacy and data protection utilities
 export const sanitizeInput = (input: string): string => {
-  // Remove potentially harmful characters and limit length
+  // Remove potentially harmful content
   return input
-    .replace(/[<>]/g, '') // Remove potential XSS characters
     .trim()
-    .substring(0, 1000); // Limit input length
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '') // Remove script tags
+    .replace(/<[^>]*>/g, '') // Remove HTML tags
+    .replace(/javascript:/gi, '') // Remove javascript: protocol
+    .replace(/on\w+\s*=/gi, '') // Remove event handlers
+    .substring(0, 1000); // Limit length
+};
+
+export const validateMessage = (message: string): boolean => {
+  if (!message || message.trim().length === 0) {
+    return false;
+  }
+  
+  if (message.length > 1000) {
+    return false;
+  }
+  
+  // Check for spam patterns
+  const spamPatterns = [
+    /(.)\1{10,}/, // Repeated characters
+    /https?:\/\/[^\s]+/gi, // URLs (optional - remove if you want to allow URLs)
+  ];
+  
+  return !spamPatterns.some(pattern => pattern.test(message));
+};
+
+export const maskPersonalInfo = (message: string): string => {
+  // Basic patterns for common personal info
+  return message
+    .replace(/\b\d{3}-\d{3}-\d{4}\b/g, '[PHONE]') // Phone numbers
+    .replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, '[EMAIL]') // Email addresses
+    .replace(/\b\d{4}\s?\d{4}\s?\d{4}\s?\d{4}\b/g, '[CARD]') // Credit card numbers
+    .replace(/\b\d{3}-\d{2}-\d{4}\b/g, '[SSN]'); // SSN
 };
 
 export const generateAnonymousId = (): string => {
-  // Generate a random anonymous ID for session tracking
-  return 'anon_' + Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+  return 'anon_' + Math.random().toString(36).substr(2, 9);
 };
 
-export const clearSensitiveData = (): void => {
-  // Clear any sensitive data from localStorage on logout/session end
-  const keysToRemove = ['chatHistory', 'userPreferences', 'sessionData'];
-  keysToRemove.forEach(key => {
-    localStorage.removeItem(key);
-  });
+export const clearSensitiveData = (data: any): any => {
+  if (typeof data === 'string') {
+    return maskPersonalInfo(data);
+  }
+  
+  if (Array.isArray(data)) {
+    return data.map(clearSensitiveData);
+  }
+  
+  if (typeof data === 'object' && data !== null) {
+    const cleaned: any = {};
+    for (const [key, value] of Object.entries(data)) {
+      // Skip sensitive fields
+      if (['password', 'token', 'secret', 'key'].includes(key.toLowerCase())) {
+        continue;
+      }
+      cleaned[key] = clearSensitiveData(value);
+    }
+    return cleaned;
+  }
+  
+  return data;
 };
 
 export const validateTopicSelection = (topic: string): boolean => {
-  const validTopics = [
-    'general',
-    'relationships',
-    'work-stress',
-    'family',
-    'married-life',
-    'lgbtq',
-    'loneliness'
+  if (!topic || topic.trim().length === 0) {
+    return false;
+  }
+  
+  if (topic.length > 100) {
+    return false;
+  }
+  
+  // Check for inappropriate content
+  const inappropriatePatterns = [
+    /\b(violence|illegal|drugs|self-harm)\b/gi,
   ];
-  return validTopics.includes(topic);
+  
+  return !inappropriatePatterns.some(pattern => pattern.test(topic));
 };

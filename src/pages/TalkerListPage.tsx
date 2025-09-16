@@ -3,53 +3,22 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, MessageCircle, Clock, User } from "lucide-react";
-import { useState } from "react";
-
-interface Talker {
-  id: string;
-  name: string;
-  status: "online" | "waiting";
-  waitingTime: string;
-  topic: string;
-}
-
-const mockTalkers: Talker[] = [
-  {
-    id: "1",
-    name: "Anonymous User",
-    status: "waiting",
-    waitingTime: "3 min",
-    topic: "Need someone to talk to about work stress"
-  },
-  {
-    id: "2", 
-    name: "Sarah M.",
-    status: "waiting",
-    waitingTime: "7 min",
-    topic: "Going through a difficult breakup"
-  },
-  {
-    id: "3",
-    name: "Anonymous User",
-    status: "waiting", 
-    waitingTime: "12 min",
-    topic: "Feeling anxious about upcoming exams"
-  },
-  {
-    id: "4",
-    name: "Mike R.",
-    status: "waiting",
-    waitingTime: "2 min",
-    topic: "Family issues and need guidance"
-  }
-];
+import { useEffect } from "react";
+import { useSocketContext } from "@/contexts/SocketContext";
 
 const TalkerListPage = () => {
   const navigate = useNavigate();
-  const [talkers] = useState<Talker[]>(mockTalkers);
+  const { availableTalkers, isConnected, requestChat } = useSocketContext();
+
+  useEffect(() => {
+    // Start looking for talkers when component mounts
+    if (isConnected) {
+      // This will trigger the socket to send available talkers
+    }
+  }, [isConnected]);
 
   const handleConnect = (talkerId: string) => {
-    navigate(`/live-chat/${talkerId}`);
+    requestChat(talkerId);
   };
 
   return (
@@ -63,7 +32,7 @@ const TalkerListPage = () => {
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Active Conversations</span>
             <Badge variant="outline" className="text-sm bg-primary/10 text-primary border-primary/40 font-medium">
-              {talkers.length} waiting
+              {availableTalkers.length} waiting
             </Badge>
           </div>
         </div>
@@ -93,8 +62,8 @@ const TalkerListPage = () => {
 
         {/* Talkers Grid */}
         <div className="space-y-4">
-          {talkers.length > 0 ? (
-            talkers.map((talker) => (
+          {availableTalkers.length > 0 ? (
+            availableTalkers.map((talker) => (
               <Card key={talker.id} className="p-6 border-border/50 hover:border-accent/50 transition-all duration-300 hover:shadow-lg animate-fade-in">
                 <div className="flex items-start gap-4">
                   {/* Avatar */}
@@ -105,21 +74,21 @@ const TalkerListPage = () => {
                   {/* Info */}
                   <div className="flex-1 space-y-3">
                     <div className="flex items-center gap-3">
-                      <h3 className="font-semibold text-foreground">{talker.name}</h3>
+                      <h3 className="font-semibold text-foreground">{talker.displayName}</h3>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                        Online
+                        <div className={`w-2 h-2 rounded-full ${talker.isOnline ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                        {talker.isOnline ? 'Online' : 'Offline'}
                       </div>
                     </div>
 
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      {talker.topic}
+                      Looking for someone to talk to...
                     </p>
 
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Clock className="w-3 h-3" />
-                        Waiting {talker.waitingTime}
+                        <User className="w-3 h-3" />
+                        {talker.role}
                       </div>
                       
                       <Button

@@ -29,12 +29,21 @@ const MessageList = ({ messages, userRole, partnerTyping, messagesEndRef }: Mess
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  const normalizeRole = (sender: string): 'listener' | 'talker' => {
+    if (sender === 'listener' || sender === 'talker') {
+      return sender;
+    }
+    // Default fallback
+    return userRole === 'listener' ? 'talker' : 'listener';
+  };
+
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-background to-muted/20">
       {messages.map((msg) => {
-        const isCurrentUser = msg.sender === userRole;
-        const IconComponent = getRoleIcon(msg.sender);
-        const roleColor = getRoleColor(msg.sender);
+        const normalizedSender = normalizeRole(msg.sender);
+        const isCurrentUser = normalizedSender === userRole;
+        const IconComponent = getRoleIcon(normalizedSender);
+        const roleColor = getRoleColor(normalizedSender);
         
         return (
           <div
@@ -56,7 +65,7 @@ const MessageList = ({ messages, userRole, partnerTyping, messagesEndRef }: Mess
                       <p className={`text-xs font-medium ${
                         isCurrentUser ? 'text-primary-foreground' : 'text-primary'
                       }`}>
-                        {isCurrentUser ? 'You' : `Anonymous ${getRoleDisplay(msg.sender)}`}
+                        {isCurrentUser ? 'You' : `Anonymous ${getRoleDisplay(normalizedSender)}`}
                       </p>
                       <p className={`text-xs ${
                         isCurrentUser ? 'text-primary-foreground/70' : 'text-muted-foreground'

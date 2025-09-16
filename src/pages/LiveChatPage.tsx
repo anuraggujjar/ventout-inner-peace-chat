@@ -4,45 +4,32 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Send, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-
-interface Message {
-  id: string;
-  text: string;
-  sender: "listener" | "talker";
-  timestamp: Date;
-}
-
-const mockTalkers = {
-  "1": { name: "Anonymous User", topic: "Work stress" },
-  "2": { name: "Sarah M.", topic: "Relationship issues" },
-  "3": { name: "Anonymous User", topic: "Exam anxiety" },
-  "4": { name: "Mike R.", topic: "Family guidance" }
-};
+import { useSocketContext } from "@/contexts/SocketContext";
+import { ChatMessage } from "@/components/ChatMessage";
 
 const LiveChatPage = () => {
   const navigate = useNavigate();
-  const { talkerId } = useParams<{ talkerId: string }>();
   const { toast } = useToast();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const { 
+    messages, 
+    partner, 
+    currentRoom, 
+    sendTextMessage, 
+    startTyping, 
+    stopTyping, 
+    leaveChat, 
+    partnerTyping,
+    isConnected 
+  } = useSocketContext();
   const [newMessage, setNewMessage] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const talker = talkerId ? mockTalkers[talkerId as keyof typeof mockTalkers] : null;
-
+  // Redirect if no active chat
   useEffect(() => {
-    // Initial message from talker
-    if (talker) {
-      setMessages([
-        {
-          id: "1",
-          text: `Hi, thanks for connecting with me. I really need someone to talk to about ${talker.topic.toLowerCase()}.`,
-          sender: "talker",
-          timestamp: new Date()
-        }
-      ]);
+    if (!currentRoom && !partner) {
+      navigate('/talker-list');
     }
-  }, [talker]);
+  }, [currentRoom, partner, navigate]);
 
   useEffect(() => {
     scrollToBottom();
@@ -53,30 +40,20 @@ const LiveChatPage = () => {
   };
 
   const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !isConnected) return;
 
-    const message: Message = {
-      id: Date.now().toString(),
-      text: newMessage,
-      sender: "listener",
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, message]);
+    sendTextMessage(newMessage);
     setNewMessage("");
+    stopTyping();
+  };
 
-    // Simulate talker typing and response
-    setIsTyping(true);
-    setTimeout(() => {
-      setIsTyping(false);
-      const response: Message = {
-        id: (Date.now() + 1).toString(),
-        text: "Thank you for listening. That really helps me feel better about the situation.",
-        sender: "talker",
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, response]);
-    }, 2000);
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewMessage(e.target.value);
+    if (e.target.value.trim()) {
+      startTyping();
+    } else {
+      stopTyping();
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -87,6 +64,7 @@ const LiveChatPage = () => {
   };
 
   const handleEndSession = () => {
+    leaveChat();
     toast({
       title: "Session Ended",
       description: "Thank you for providing support. The conversation has been securely ended.",
@@ -94,12 +72,12 @@ const LiveChatPage = () => {
     navigate("/talker-list");
   };
 
-  if (!talker) {
+  if (!partner || !currentRoom) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">Talker Not Found</h2>
-          <p className="text-muted-foreground mb-4">This conversation may have ended.</p>
+          <h2 className="text-xl font-semibold mb-2">No Active Chat</h2>
+          <p className="text-muted-foreground mb-4">Please select someone to chat with.</p>
           <Button onClick={() => navigate("/talker-list")} className="bg-primary hover:bg-primary/90 text-primary-foreground">
             Back to Talker List
           </Button>
@@ -123,8 +101,10 @@ const LiveChatPage = () => {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div>
-              <h1 className="font-semibold text-foreground">{talker.name}</h1>
-              <p className="text-xs text-muted-foreground">{talker.topic}</p>
+              <h1 className="font-semibold text-foreground">{partner.displayName}</h1>
+              <p className="text-xs text-muted-foreground">
+                {isConnected ? 'Connected' : 'Connecting...'}
+              </p>
             </div>
           </div>
           
@@ -145,31 +125,18 @@ const LiveChatPage = () => {
       <main className="flex-1 p-4 overflow-y-auto">
         <div className="max-w-2xl mx-auto space-y-4">
           {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`flex ${
-                message.sender === "listener" ? "justify-end" : "justify-start"
-              }`}
-            >
-              <div
-                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl ${
-                  message.sender === "listener"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-card border border-border/50"
-                }`}
-              >
-                <p className="text-sm">{message.text}</p>
-                <p className="text-xs opacity-70 mt-1">
-                  {message.timestamp.toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </p>
-              </div>
-            </div>
+            <ChatMessage 
+              key={message.id} 
+              message={{
+                id: message.id,
+                text: message.content,
+                sender: message.sender as "listener" | "talker",
+                timestamp: message.timestamp
+              }} 
+            />
           ))}
           
-          {isTyping && (
+          {partnerTyping && (
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                 <div className="w-2 h-2 bg-primary rounded-full animate-pulse"></div>
@@ -194,15 +161,16 @@ const LiveChatPage = () => {
             <div className="flex-1">
               <Input
                 value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
+                onChange={handleInputChange}
                 onKeyPress={handleKeyPress}
                 placeholder="Type your message..."
+                disabled={!isConnected}
                 className="min-h-[48px] rounded-2xl border-border/50 bg-background px-4 py-3 text-sm resize-none focus:border-accent transition-colors"
               />
             </div>
             <Button
               onClick={handleSendMessage}
-              disabled={!newMessage.trim()}
+              disabled={!newMessage.trim() || !isConnected}
               className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-2xl px-6 py-3 h-12 disabled:opacity-50"
             >
               <Send className="w-4 h-4" />

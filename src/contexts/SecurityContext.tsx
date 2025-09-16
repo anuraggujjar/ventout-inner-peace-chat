@@ -30,7 +30,7 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
     // Clear session data on page unload
     const handleBeforeUnload = () => {
-      clearSensitiveData();
+      localStorage.removeItem('sessionId');
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -38,7 +38,7 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   }, []);
 
   const clearSession = () => {
-    clearSensitiveData();
+    localStorage.removeItem('sessionId');
     const newSessionId = generateAnonymousId();
     setSessionId(newSessionId);
     localStorage.setItem('sessionId', newSessionId);

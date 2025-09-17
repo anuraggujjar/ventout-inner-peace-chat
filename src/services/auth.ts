@@ -6,7 +6,7 @@ import { jwtDecode } from 'jwt-decode';
 
 const API_BASE_URL = 'https://ventoutserver.onrender.com';
 
-const GOOGLE_WEB_CLIENT_ID = ' ';
+const GOOGLE_WEB_CLIENT_ID = ''; // Empty for now - will be configured later
 
 export interface User {
   id: string;
@@ -60,18 +60,32 @@ class AuthService {
 
   constructor() {
     this.setupInterceptors();
-    this.initializeGoogleAuth();
+    // Initialize Google Auth async to prevent blocking constructor
+    this.initializeGoogleAuth().catch(error => {
+      console.warn('Google Auth initialization failed:', error);
+      // Continue without Google Auth
+    });
   }
 
   private async initializeGoogleAuth() {
-    if (Capacitor.isNativePlatform()) {
-      await GoogleAuth.initialize({
-        clientId: GOOGLE_WEB_CLIENT_ID,
-        scopes: ['profile', 'email'],
-        grantOfflineAccess: true,
-      });
-    } else {
-      await this.loadGoogleGisSDK();
+    try {
+      if (!GOOGLE_WEB_CLIENT_ID) {
+        console.warn('Google Client ID not configured, skipping Google Auth initialization');
+        return;
+      }
+
+      if (Capacitor.isNativePlatform()) {
+        await GoogleAuth.initialize({
+          clientId: GOOGLE_WEB_CLIENT_ID,
+          scopes: ['profile', 'email'],
+          grantOfflineAccess: true,
+        });
+      } else {
+        await this.loadGoogleGisSDK();
+      }
+    } catch (error) {
+      console.error('Failed to initialize Google Auth:', error);
+      throw error;
     }
   }
 
@@ -167,6 +181,10 @@ class AuthService {
 
   async googleLogin(): Promise<AuthResponse> {
     try {
+      if (!GOOGLE_WEB_CLIENT_ID) {
+        throw new Error('Google Client ID not configured. Please contact support.');
+      }
+
       if (Capacitor.isNativePlatform()) {
         const googleUser = await GoogleAuth.signIn();
         

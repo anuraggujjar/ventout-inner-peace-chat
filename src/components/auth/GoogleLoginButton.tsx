@@ -30,9 +30,10 @@ export const GoogleLoginButton: React.FC = () => {
         navigate('/topic-selection');
       }
     } catch (error) {
+      console.error('Google login error:', error);
       toast({
-        title: "Google login failed",
-        description: error instanceof Error ? error.message : "Please try again",
+        title: "Google login not available",
+        description: "Please use email or phone login instead",
         variant: "destructive",
       });
     } finally {

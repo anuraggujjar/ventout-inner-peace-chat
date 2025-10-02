@@ -27,7 +27,17 @@ const MessageList = ({ messages, userRole, partnerTyping, messagesEndRef, user }
     return role === 'listener' ? 'green' : 'blue';
   };
 
-  const formatTime = (date: Date) => {
+  const formatTime = (dateString: string | Date | undefined) => {
+    // Check if the date string exists
+    if (!dateString) {
+      console.log('Formatting date: undefined');
+      return '...'; // Return a placeholder to prevent the crash
+    }
+
+    // Convert the ISO string to a Date object if it's a string
+    const date = typeof dateString === 'string' ? new Date(dateString) : dateString;
+
+    // Return the formatted time
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
@@ -74,7 +84,7 @@ const MessageList = ({ messages, userRole, partnerTyping, messagesEndRef, user }
                       <p className={`text-xs ${
                         isCurrentUser ? 'text-primary-foreground/70' : 'text-muted-foreground'
                       }`}>
-                        {formatTime(msg.timestamp)}
+                        {formatTime(msg.timestamp || msg.createdAt)}
                       </p>
                     </div>
                     

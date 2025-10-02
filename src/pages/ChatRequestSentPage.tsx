@@ -4,44 +4,69 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { MessageCircle, Clock, Users, Heart } from 'lucide-react';
+import { useSocketContext } from '@/contexts/SocketContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const ChatRequestSentPage = () => {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [dots, setDots] = useState('');
   const [connectionTime, setConnectionTime] = useState(0);
+  const { 
+    isConnected, 
+    currentRoom, 
+    partner, 
+    joinWaitingQueue, 
+    leaveWaitingQueue,
+    startLooking,
+    stopLooking, 
+  } = useSocketContext();
   
   const { topic, feeling } = location.state || {};
 
+  // Navigate to chat when match is found
   useEffect(() => {
-    // Animated dots for "Connecting" text
+    if (currentRoom && partner) {
+      navigate('/chat');
+    }
+  }, [currentRoom, partner, navigate]);
+
+  // Start looking for a match on mount
+  useEffect(() => {
+    if (!isConnected || !user) return;
+
+    const timer = setTimeout(() => {
+      startLooking();
+      joinWaitingQueue();
+    }, 500);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [isConnected, user]);
+
+  // Animated dots and connection timer
+  useEffect(() => {
     const dotsInterval = setInterval(() => {
       setDots(prev => prev.length >= 3 ? '' : prev + '.');
     }, 500);
 
-    // Connection timer
     const timerInterval = setInterval(() => {
       setConnectionTime(prev => prev + 1);
     }, 1000);
 
-    // Auto redirect to chat after 5 seconds
-    const redirectTimer = setTimeout(() => {
-      navigate('/chat', { 
-        state: { 
-          topic, 
-          feeling,
-          userName: 'You',
-          listenerName: 'Sarah'
-        } 
-      });
-    }, 5000);
-
     return () => {
       clearInterval(dotsInterval);
       clearInterval(timerInterval);
-      clearTimeout(redirectTimer);
     };
-  }, [navigate, topic, feeling]);
+  }, []);
+
+  const handleCancelRequest = () => {
+    stopLooking();
+    leaveWaitingQueue();
+    navigate('/topic-selection');
+  };
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -134,7 +159,7 @@ const ChatRequestSentPage = () => {
           </div>
 
           <Button
-            onClick={() => navigate('/')}
+            onClick={handleCancelRequest}
             variant="outline"
             className="hover:scale-105 transition-transform duration-200"
           >

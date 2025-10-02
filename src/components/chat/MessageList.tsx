@@ -4,15 +4,17 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Heart, MessageCircle } from 'lucide-react';
 import AudioMessage from './AudioMessage';
 import { Message } from '@/types/message';
+import { User } from '@/services/auth';
 
 interface MessageListProps {
   messages: Message[];
   userRole: 'listener' | 'talker';
   partnerTyping: boolean;
   messagesEndRef: React.RefObject<HTMLDivElement>;
+  user: User | null;
 }
 
-const MessageList = ({ messages, userRole, partnerTyping, messagesEndRef }: MessageListProps) => {
+const MessageList = ({ messages, userRole, partnerTyping, messagesEndRef, user }: MessageListProps) => {
   const getRoleDisplay = (role: 'listener' | 'talker') => {
     return role === 'listener' ? 'Listener' : 'Talker';
   };
@@ -40,9 +42,11 @@ const MessageList = ({ messages, userRole, partnerTyping, messagesEndRef }: Mess
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-background to-muted/20">
       {messages.map((msg) => {
-        const normalizedSender = normalizeRole(msg.sender);
-        const isCurrentUser = normalizedSender === userRole;
+        console.log('Message:', msg);
+        const isCurrentUser = msg.senderId === user?.id;
+        const normalizedSender = isCurrentUser ? userRole : (userRole === 'listener' ? 'talker' : 'listener');
         const IconComponent = getRoleIcon(normalizedSender);
+        console.log('Message:', isCurrentUser, msg);
         const roleColor = getRoleColor(normalizedSender);
         
         return (

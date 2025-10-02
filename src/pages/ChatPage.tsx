@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import Layout from '@/components/Layout';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -7,227 +6,260 @@ import MessageList from '@/components/chat/MessageList';
 import MessageInput from '@/components/chat/MessageInput';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+import { useSocketContext } from '@/contexts/SocketContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { sanitizeInput } from '@/utils/privacy';
-import { Message } from '@/types/message';
+import { Card } from '@/components/ui/card';
+import { Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
+const API_BASE_URL = 'https://ventoutserver.onrender.com';
 
 const ChatPage = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { toast } = useToast();
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [userRole, setUserRole] = useState<'listener' | 'talker'>('talker');
-  const [partnerTyping, setPartnerTyping] = useState(false);
-  const [sessionId, setSessionId] = useState<string>('');
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { toast } = useToast();
+    const { user } = useAuth();
+    const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+    const {
+        isConnected,
+        currentRoom,
+        partner,
+        partnerTyping,
+        sendTextMessage,
+        sendVoiceMessage,
+        leaveChat,
+        currentConvoId,
+        setChatSession,
+        clearChatSession,
+        onTextMessage,
+        onPartnerDisconnected,
+    } = useSocketContext();
 
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    const [message, setMessage] = useState('');
+    const [showFeedback, setShowFeedback] = useState(false);
+    const [isWaitingForMatch, setIsWaitingForMatch] = useState(true);
+    const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
+    const [messages, setMessages] = useState<any[]>([]);
 
-  useEffect(() => {
-    // Initialize chat session directly
-    initializeChatSession();
-    
-    return () => {
-      // Cleanup on unmount
-      if (sessionId) {
-        leaveChatSession();
-      }
+    const { topic, feeling } = location.state || {};
+    const userRole = user?.role || 'talker';
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
-  }, []);
 
-  const initializeChatSession = async () => {
-    try {
-      // Generate session ID and determine role
-      const newSessionId = 'chat_' + Math.random().toString(36).substr(2, 9);
-      setSessionId(newSessionId);
-      
-      // Connect directly without waiting room
-      setConnectionStatus('connected');
-      
-      // Randomly assign roles or use URL parameter
-      const role = Math.random() > 0.5 ? 'listener' : 'talker';
-      setUserRole(role);
-      
-      // Add welcome message
-      const welcomeMessage: Message = {
-        id: '1',
-        sender: role === 'listener' ? 'talker' : 'listener',
-        content: role === 'listener' 
-          ? "Hi! I'm here and ready to talk. Thank you for being willing to listen."
-          : "Hello! I'm here to listen. Feel free to share whatever is on your mind - this is a safe space.",
-        timestamp: new Date(),
-        type: 'text'
-      };
-      setMessages([welcomeMessage]);
-      
-      toast({
-        title: "Connected!",
-        description: `You're now connected as a ${role}. The conversation is completely anonymous.`,
-      });
-      
-    } catch (error) {
-      console.error('Failed to initialize chat session:', error);
-      setConnectionStatus('disconnected');
-      toast({
-        title: "Connection Failed",
-        description: "Unable to connect to chat. Please try again.",
-        variant: "destructive"
-      });
+    // Fetch chat history when conversation ID is available
+    useEffect(() => {
+        if (currentConvoId && currentRoom) {
+            const fetchChatHistory = async () => {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/conversations/${currentConvoId}/messages`);
+
+                    if (response.ok) {
+                        const history = await response.json();
+                        
+                        // Normalize the message format from the database
+                        const normalizedHistory = history.map(msg => ({
+                            id: msg._id,
+                            roomId: msg.conversationId,
+                            senderId: msg.sender,
+                            sender: msg.sender,
+                            content: msg.content,
+                            text: msg.content,
+                            timestamp: new Date(msg.createdAt),
+                            createdAt: new Date(msg.createdAt),
+                            type: msg.type || 'text',
+                            audioData: msg.audioData,
+                            duration: msg.duration,
+                        }));
+
+                        setMessages(normalizedHistory);
+                    } else {
+                        throw new Error('Failed to fetch chat history');
+                    }
+                } catch (error) {
+                    console.error("Error fetching chat history:", error);
+                    toast({
+                        title: "Error",
+                        description: "Could not load chat history. Please try again.",
+                        variant: "destructive"
+                    });
+                }
+            };
+            fetchChatHistory();
+        } else {
+            setMessages([]);
+        }
+    }, [currentConvoId, currentRoom, toast]);
+
+    // Listen for new incoming messages from the socket
+    useEffect(() => {
+        const removeMessageListener = onTextMessage((newMessage) => {
+            setMessages(prev => [...prev, newMessage]);
+        });
+        
+        const removePartnerListener = onPartnerDisconnected(() => {
+            toast({
+                title: "Chat Ended",
+                description: "Your partner has disconnected. Please submit feedback to start a new chat."
+            });
+            clearChatSession();
+            setShowFeedback(true);
+        });
+
+        return () => {
+            removeMessageListener();
+            removePartnerListener();
+        };
+    }, [onTextMessage, onPartnerDisconnected, clearChatSession, toast]);
+
+    // Auto-scroll when new messages arrive
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages]);
+
+    // Update connection status based on socket state
+    useEffect(() => {
+        if (isConnected && currentRoom) {
+            setConnectionStatus('connected');
+            setIsWaitingForMatch(false);
+        } else if (isConnected) {
+            setConnectionStatus('connected');
+            setIsWaitingForMatch(true);
+        } else {
+            setConnectionStatus('connecting');
+            setIsWaitingForMatch(true);
+        }
+    }, [isConnected, currentRoom]);
+
+    // Show match found notification
+    useEffect(() => {
+        if (currentRoom && partner && isWaitingForMatch) {
+            setIsWaitingForMatch(false);
+            toast({
+                title: "Match Found!",
+                description: `Connected with a ${partner.role}. Your conversation is anonymous.`,
+            });
+        }
+    }, [currentRoom, partner, isWaitingForMatch, toast]);
+
+    const handleCancelWaiting = () => {
+        navigate('/');
+    };
+
+    const handleSendMessage = () => {
+        if (message.trim() && connectionStatus === 'connected' && currentRoom && user) {
+            const sanitizedMessage = sanitizeInput(message);
+            sendTextMessage(sanitizedMessage);
+            setMessage('');
+        }
+    };
+
+    const handleSendVoiceMessage = (audioData: string, duration: number) => {
+        if (connectionStatus === 'connected' && currentRoom && user) {
+            sendVoiceMessage(audioData);
+        }
+    };
+
+    const handleEndChat = () => {
+        if (currentRoom) {
+            leaveChat();
+        }
+        setShowFeedback(true);
+    };
+
+    const handleFeedbackSubmit = (rating: number, feedbackText: string) => {
+        console.log('Feedback submitted:', {
+            rating,
+            feedbackText,
+            sessionDetails: {
+                roomId: currentRoom,
+                userRole,
+                topic,
+                feeling,
+                messageCount: messages.length
+            }
+        });
+        toast({
+            title: "Chat Ended",
+            description: "Thank you for using VentOut and for your feedback. Take care of yourself.",
+        });
+        navigate('/');
+    };
+
+    const handleFeedbackClose = () => {
+        setShowFeedback(false);
+        toast({
+            title: "Chat Ended",
+            description: "Thank you for using VentOut. Take care of yourself.",
+        });
+        navigate('/');
+    };
+
+    const handleReport = () => {
+        toast({
+            title: "Report Submitted",
+            description: "Thank you for your feedback. We take all reports seriously.",
+        });
+    };
+
+    // Show waiting screen for talkers while looking for a match
+    if (userRole === 'talker' && isWaitingForMatch) {
+        return (
+            <Layout>
+                <div className="flex flex-col items-center justify-center min-h-[60vh] p-6">
+                    <Card className="p-8 max-w-md w-full text-center space-y-6">
+                        <Loader2 className="w-16 h-16 mx-auto animate-spin text-primary" />
+                        <h2 className="text-2xl font-semibold">Looking for a listener...</h2>
+                        <p className="text-muted-foreground">
+                            We're connecting you with someone who wants to listen.
+                        </p>
+                        <Button onClick={handleCancelWaiting} variant="outline">
+                            Cancel
+                        </Button>
+                    </Card>
+                </div>
+            </Layout>
+        );
     }
-  };
 
-  const leaveChatSession = () => {
-    // In a real implementation, notify the server about leaving
-    console.log('Leaving chat session:', sessionId);
-  };
+    return (
+        <Layout>
+            <div className="flex flex-col h-[calc(100vh-8rem)] max-w-4xl mx-auto">
+                <ChatHeader
+                    userRole={userRole}
+                    connectionStatus={connectionStatus}
+                    sessionId={currentRoom || 'connecting'}
+                />
 
-  const handleSendMessage = () => {
-    if (message.trim() && connectionStatus === 'connected') {
-      const sanitizedMessage = sanitizeInput(message);
-      const newMessage: Message = {
-        id: Date.now().toString(),
-        sender: userRole,
-        content: sanitizedMessage,
-        timestamp: new Date(),
-        type: 'text'
-      };
+                <MessageList
+                    messages={messages}
+                    userRole={userRole}
+                    partnerTyping={partnerTyping}
+                    messagesEndRef={messagesEndRef}
+                    user={user}
+                />
 
-      setMessages(prev => [...prev, newMessage]);
-      setMessage('');
+                <MessageInput
+                    message={message}
+                    setMessage={setMessage}
+                    onSendMessage={handleSendMessage}
+                    onSendVoiceMessage={handleSendVoiceMessage}
+                    onEndChat={handleEndChat}
+                    onReport={handleReport}
+                    connectionStatus={connectionStatus}
+                />
+            </div>
 
-      // In a real implementation, you would send this message through WebSocket
-      console.log('Sending message:', newMessage);
-      
-      // Simulate partner typing indicator occasionally
-      if (Math.random() > 0.7) {
-        setPartnerTyping(true);
-        setTimeout(() => setPartnerTyping(false), 2000 + Math.random() * 3000);
-      }
-    }
-  };
-
-  const handleSendVoiceMessage = (audioData: string, duration: number) => {
-    console.log('handleSendVoiceMessage called with:', {
-      audioDataLength: audioData.length,
-      duration,
-      userRole,
-      currentMessagesCount: messages.length
-    });
-    
-    if (connectionStatus === 'connected') {
-      const newMessage: Message = {
-        id: Date.now().toString(),
-        sender: userRole,
-        content: '', // Voice messages don't need text content
-        timestamp: new Date(),
-        type: 'voice',
-        audioData,
-        duration
-      };
-
-      console.log('Adding voice message to state:', newMessage);
-      setMessages(prev => {
-        const updated = [...prev, newMessage];
-        console.log('Updated messages array:', updated);
-        return updated;
-      });
-
-      // In a real implementation, you would send this voice message through WebSocket
-      console.log('Sending voice message:', { 
-        id: newMessage.id, 
-        sender: newMessage.sender, 
-        duration: newMessage.duration,
-        audioDataLength: audioData.length 
-      });
-      
-      toast({
-        title: "Voice message sent",
-        description: "Your voice message has been delivered.",
-      });
-    }
-  };
-
-  const handleEndChat = () => {
-    setShowFeedback(true);
-  };
-
-  const handleFeedbackSubmit = (rating: number, feedbackText: string) => {
-    console.log('Feedback submitted:', { 
-      rating, 
-      feedbackText, 
-      sessionDetails: { 
-        sessionId,
-        userRole,
-        messageCount: messages.length 
-      }
-    });
-    
-    toast({
-      title: "Chat Ended",
-      description: "Thank you for using Plaro and for your feedback. Take care of yourself.",
-    });
-    
-    navigate('/');
-  };
-
-  const handleFeedbackClose = () => {
-    setShowFeedback(false);
-    toast({
-      title: "Chat Ended",
-      description: "Thank you for using Plaro. Take care of yourself.",
-    });
-    navigate('/');
-  };
-
-  const handleReport = () => {
-    toast({
-      title: "Report Submitted",
-      description: "Thank you for your feedback. We take all reports seriously.",
-    });
-  };
-
-  return (
-    <Layout>
-      <div className="flex flex-col h-[calc(100vh-8rem)] max-w-4xl mx-auto">
-        <ChatHeader
-          userRole={userRole}
-          connectionStatus={connectionStatus}
-          sessionId={sessionId}
-        />
-
-        <MessageList
-          messages={messages}
-          userRole={userRole}
-          partnerTyping={partnerTyping}
-          messagesEndRef={messagesEndRef}
-        />
-
-        <MessageInput
-          message={message}
-          setMessage={setMessage}
-          onSendMessage={handleSendMessage}
-          onSendVoiceMessage={handleSendVoiceMessage}
-          onEndChat={handleEndChat}
-          onReport={handleReport}
-          connectionStatus={connectionStatus}
-        />
-      </div>
-
-      <FeedbackModal
-        isOpen={showFeedback}
-        onClose={handleFeedbackClose}
-        onSubmit={handleFeedbackSubmit}
-      />
-    </Layout>
-  );
+            <FeedbackModal
+                isOpen={showFeedback}
+                onClose={handleFeedbackClose}
+                onSubmit={handleFeedbackSubmit}
+            />
+        </Layout>
+    );
 };
 
 export default ChatPage;

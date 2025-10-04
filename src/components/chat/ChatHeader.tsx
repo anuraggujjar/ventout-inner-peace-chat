@@ -27,15 +27,6 @@ const ChatHeader = ({ userRole, connectionStatus, sessionId }: ChatHeaderProps) 
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
-            <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-${getRoleColor(userRole)}-500/20 to-${getRoleColor(userRole)}-600/20 flex items-center justify-center`}>
-              {React.createElement(getRoleIcon(userRole), { size: 20, className: `text-${getRoleColor(userRole)}-500` })}
-            </div>
-            <span className="font-medium text-primary">You ({getRoleDisplay(userRole)})</span>
-          </div>
-          
-          <div className="text-2xl text-muted-foreground">↔</div>
-          
-          <div className="flex items-center space-x-2">
             <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-${getRoleColor(userRole === 'listener' ? 'talker' : 'listener')}-500/20 to-${getRoleColor(userRole === 'listener' ? 'talker' : 'listener')}-600/20 flex items-center justify-center`}>
               {React.createElement(getRoleIcon(userRole === 'listener' ? 'talker' : 'listener'), { size: 20, className: `text-${getRoleColor(userRole === 'listener' ? 'talker' : 'listener')}-500` })}
             </div>
@@ -50,6 +41,15 @@ const ChatHeader = ({ userRole, connectionStatus, sessionId }: ChatHeaderProps) 
                 <span className="text-xs text-muted-foreground capitalize">{connectionStatus}</span>
               </div>
             </div>
+          </div>
+          
+          <div className="text-2xl text-muted-foreground">↔</div>
+          
+          <div className="flex items-center space-x-2">
+            <div className={`w-10 h-10 rounded-full bg-gradient-to-br from-${getRoleColor(userRole)}-500/20 to-${getRoleColor(userRole)}-600/20 flex items-center justify-center`}>
+              {React.createElement(getRoleIcon(userRole), { size: 20, className: `text-${getRoleColor(userRole)}-500` })}
+            </div>
+            <span className="font-medium text-primary">You ({getRoleDisplay(userRole)})</span>
           </div>
         </div>
 

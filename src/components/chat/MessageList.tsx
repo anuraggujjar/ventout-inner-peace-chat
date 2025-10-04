@@ -100,7 +100,7 @@ const MessageList = ({ messages, userRole, partnerTyping, messagesEndRef, user }
                       <p className={`text-sm ${
                         isCurrentUser ? 'text-primary-foreground' : 'text-foreground'
                       }`}>
-                        {msg.content}
+                        {msg.text || msg.content}
                       </p>
                     )}
                   </div>

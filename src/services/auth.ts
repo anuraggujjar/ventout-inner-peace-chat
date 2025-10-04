@@ -108,74 +108,93 @@ class AuthService {
   public async getToken(): Promise<string | null> {
     // If a refresh is already in progress, all subsequent calls wait for it.
     if (this.isRefreshingPromise) {
-        console.log('Refresh already in progress, waiting for it to resolve.');
-        return await this.isRefreshingPromise;
+      console.log('Refresh already in progress, waiting for it to resolve.');
+      try {
+        const result = await Promise.race([
+          this.isRefreshingPromise,
+          new Promise<null>((resolve) => setTimeout(() => resolve(null), 10000)),
+        ]);
+        return result;
+      } catch (e) {
+        console.error('Error while waiting for ongoing refresh:', e);
+        return null;
+      }
     }
 
-    let accessToken = await this.getStoredToken();
+    const accessToken = await this.getStoredToken();
 
     if (!accessToken) {
-        return null;
+      return null;
     }
 
+    let startedRefresh = false;
     try {
-        const decodedToken: { exp: number } = jwtDecode(accessToken);
-        const currentTime = Date.now() / 1000;
+      const decodedToken: { exp: number } = jwtDecode(accessToken);
+      const currentTime = Date.now() / 1000;
 
-        if (decodedToken.exp > currentTime + 300) {
-            return accessToken;
-        }
+      if (decodedToken.exp > currentTime + 300) {
+        return accessToken;
+      }
 
-        console.log('Access token is expired or close to expiration. Attempting to refresh...');
+      console.log('Access token is expired or close to expiration. Attempting to refresh...');
 
-        // Start the refresh and store the promise.
-        this.isRefreshingPromise = this.refreshAccessToken();
-        
-        const newToken = await this.isRefreshingPromise;
-        // The refresh is complete, so we clear the promise.
-        this.isRefreshingPromise = null;
-        return newToken;
+      // Start the refresh and store the promise.
+      this.isRefreshingPromise = this.refreshAccessToken();
+      startedRefresh = true;
 
+      const newToken = await Promise.race([
+        this.isRefreshingPromise,
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 10000)),
+      ]);
+      return newToken;
     } catch (error) {
-        console.error('Invalid token found in storage or refresh failed. Logging out.');
-        this.logout();
-        this.isRefreshingPromise = null; // Also clear the promise on error
-        return null;
+      console.error('Invalid token found in storage or refresh failed. Logging out.');
+      this.logout();
+      return null;
+    } finally {
+      // Ensure we always clear the refreshing promise only if we initiated it
+      if (startedRefresh) {
+        this.isRefreshingPromise = null;
+      }
     }
   }
 
   private async refreshAccessToken(): Promise<string | null> {
     try {
-        const refreshToken = await this.getStoredRefreshToken();
-        if (!refreshToken) {
-            return null;
-        }
-
-        const response = await this.apiClient.post('/auth/refresh', {
-            refreshToken,
-        });
-
-        const { token: newAccessToken, refreshToken: newRefreshToken } = response.data;
-        await this.storeToken(newAccessToken);
-        await Preferences.set({ key: 'refresh_token', value: newRefreshToken });
-
-        return newAccessToken;
-    } catch (error) {
-        console.error('Failed to refresh access token:', error);
+      const refreshToken = await this.getStoredRefreshToken();
+      if (!refreshToken) {
         return null;
+      }
+      // Use a bare axios call to avoid interceptors and circular waits
+      const response = await axios.post(`${API_BASE_URL}/auth/refresh`, { refreshToken });
+      const { token: newAccessToken, refreshToken: newRefreshToken } = response.data;
+      await this.storeToken(newAccessToken);
+      await Preferences.set({ key: 'refresh_token', value: newRefreshToken });
+      return newAccessToken;
+    } catch (error) {
+      console.error('Failed to refresh access token:', error);
+      // Clear invalid tokens to avoid getting stuck in a bad state
+      await this.clearTokens();
+      return null;
     }
   }
   
   private setupInterceptors() {
     this.apiClient.interceptors.request.use(
-        async (config) => {
-            const token = await this.getToken();
-            if (token) {
-                config.headers.Authorization = `Bearer ${token}`;
-            }
-            return config;
-        },
-        (error) => Promise.reject(error)
+      async (config) => {
+        const url = config.url || '';
+        // Avoid deadlock: do not attempt to attach token when calling refresh endpoint
+        if (url.includes('/auth/refresh')) {
+          return config;
+        }
+        const token = await this.getToken();
+        if (token) {
+          if (!config.headers) config.headers = {} as any;
+          (config.headers as any).Authorization = `Bearer ${token}`;
+        }
+        return config;
+      },
+      (error) => Promise.reject(error)
     );
   }
 

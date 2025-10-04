@@ -1,12 +1,13 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MessageCircle, Clock, User, Trash2, ArrowLeft } from 'lucide-react';
+import { MessageCircle, Clock, User, Trash2, ArrowLeft, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ChatSession {
   id: string;
@@ -21,37 +22,54 @@ interface ChatSession {
 const HistoryPage = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
-  // Mock data - in a real app this would come from a database
-  const [chatHistory] = useState<ChatSession[]>([
-    {
-      id: '1',
-      topic: 'relationships',
-      feeling: 'not-ok',
-      startTime: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
-      duration: 45,
-      listenerName: 'Sarah',
-      messageCount: 23
-    },
-    {
-      id: '2',
-      topic: 'work-stress',
-      feeling: 'ok',
-      startTime: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
-      duration: 32,
-      listenerName: 'Alex',
-      messageCount: 18
-    },
-    {
-      id: '3',
-      topic: 'general',
-      feeling: 'dont-know',
-      startTime: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // 1 week ago
-      duration: 28,
-      listenerName: 'Jordan',
-      messageCount: 15
-    }
-  ]);
+  const [chatHistory, setChatHistory] = useState<ChatSession[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const API_BASE_URL = 'https://ventoutserver.onrender.com';
+
+  useEffect(() => {
+    const fetchChatHistory = async () => {
+      if (!user?.id) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/users/${user.id}/conversations`);
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch chat history');
+        }
+
+        const conversations = await response.json();
+        
+        // Map API response to ChatSession format
+        const mappedHistory: ChatSession[] = conversations.map((conv: any) => ({
+          id: conv._id || conv.id,
+          topic: conv.topic || 'general',
+          feeling: conv.feeling || 'ok',
+          startTime: new Date(conv.createdAt),
+          duration: conv.duration || 0,
+          listenerName: conv.listenerName || 'Anonymous',
+          messageCount: conv.messageCount || 0
+        }));
+
+        setChatHistory(mappedHistory);
+      } catch (error) {
+        console.error('Error fetching chat history:', error);
+        toast({
+          title: "Error",
+          description: "Could not load chat history. Please try again later.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchChatHistory();
+  }, [user, toast]);
 
 
   const getTopicLabel = (topic: string) => {
@@ -95,11 +113,30 @@ const HistoryPage = () => {
     return date.toLocaleDateString();
   };
 
-  const handleDeleteSession = (sessionId: string) => {
-    toast({
-      title: "Session Deleted",
-      description: "Chat session has been removed from your history.",
-    });
+  const handleDeleteSession = async (sessionId: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/conversations/${sessionId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete session');
+      }
+
+      setChatHistory(prev => prev.filter(session => session.id !== sessionId));
+      
+      toast({
+        title: "Session Deleted",
+        description: "Chat session has been removed from your history.",
+      });
+    } catch (error) {
+      console.error('Error deleting session:', error);
+      toast({
+        title: "Error",
+        description: "Could not delete session. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -121,7 +158,15 @@ const HistoryPage = () => {
         </div>
 
         {/* History List */}
-        {chatHistory.length === 0 ? (
+        {isLoading ? (
+          <Card>
+            <CardContent className="text-center py-12">
+              <Loader2 className="h-12 w-12 text-primary mx-auto mb-4 animate-spin" />
+              <h3 className="text-lg font-semibold mb-2">Loading your chat history...</h3>
+              <p className="text-muted-foreground">Please wait a moment</p>
+            </CardContent>
+          </Card>
+        ) : chatHistory.length === 0 ? (
           <Card>
             <CardContent className="text-center py-12">
               <MessageCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />

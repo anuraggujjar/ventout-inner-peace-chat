@@ -17,7 +17,7 @@ const ListenerHomePage = () => {
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Header */}
       <header className="relative z-10 flex items-center justify-between p-6">
-        <h1 className="text-2xl font-bold text-primary">VentOut</h1>
+        <h1 className="text-2xl font-bold text-primary">Plaro</h1>
         <div className="flex items-center space-x-4">
           <button
             onClick={toggleDarkMode}
@@ -38,7 +38,7 @@ const ListenerHomePage = () => {
       <main className="relative z-10 flex flex-col items-center px-6 pt-8 pb-24">
         {/* Logo Section */}
         <div className="text-center mb-8">
-          <h2 className="text-5xl font-bold text-primary mb-4">VentOut</h2>
+          <h2 className="text-5xl font-bold text-primary mb-4">Plaro</h2>
           <p className="text-xl text-muted-foreground">Your safe space to be heard.</p>
         </div>
 

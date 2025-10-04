@@ -184,7 +184,7 @@ const ChatPage = () => {
         });
         toast({
             title: "Chat Ended",
-            description: "Thank you for using VentOut and for your feedback. Take care of yourself.",
+            description: "Thank you for using Plaro and for your feedback. Take care of yourself.",
         });
         navigate('/');
     };
@@ -193,7 +193,7 @@ const ChatPage = () => {
         setShowFeedback(false);
         toast({
             title: "Chat Ended",
-            description: "Thank you for using VentOut. Take care of yourself.",
+            description: "Thank you for using Plaro. Take care of yourself.",
         });
         navigate('/');
     };

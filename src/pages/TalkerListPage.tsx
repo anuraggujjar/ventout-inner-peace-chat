@@ -27,7 +27,7 @@ const TalkerListPage = () => {
       <header className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm border-b border-border">
         <div className="flex flex-col gap-3 p-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-semibold text-primary">VentOut</h1>
+            <h1 className="text-xl font-semibold text-primary">Plaro</h1>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">Active Conversations</span>

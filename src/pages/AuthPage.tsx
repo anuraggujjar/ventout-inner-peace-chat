@@ -46,7 +46,7 @@ export const AuthPage: React.FC = () => {
                 <MessageCircle className="h-6 w-6 text-primary-foreground" />
               </div>
             </div>
-            <CardTitle className="text-2xl">VentOut</CardTitle>
+            <CardTitle className="text-2xl">Plaro</CardTitle>
             <CardDescription>
               Connect, Share, and Find Support
             </CardDescription>

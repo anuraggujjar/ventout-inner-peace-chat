@@ -3,10 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Headphones, Moon, Sun, User, Home, History, Settings } from "lucide-react";
 import QuoteCard from "@/components/QuoteCard";
 import { useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const ListenerHomePage = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Get role-based home path
+  const homePath = user?.role === 'listener' ? '/listener/home' : '/';
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
@@ -84,7 +89,7 @@ const ListenerHomePage = () => {
       <nav className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-sm border-t border-border z-50">
         <div className="flex items-center justify-around py-4">
           <button 
-            onClick={() => navigate("/listener/home")}
+            onClick={() => navigate(homePath)}
             className="flex flex-col items-center space-y-1 text-primary p-2 rounded-xl"
           >
             <Home className="w-6 h-6" />

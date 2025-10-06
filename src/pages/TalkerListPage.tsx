@@ -5,10 +5,15 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, MessageCircle, Clock, User } from "lucide-react";
 import { useEffect } from "react";
 import { useSocketContext } from "@/contexts/SocketContext";
+import { useAuth } from "@/contexts/AuthContext";
 
 const TalkerListPage = () => {
   const navigate = useNavigate();
   const { availableTalkers, isConnected, requestChat } = useSocketContext();
+  const { user } = useAuth();
+
+  // Get role-based home path
+  const homePath = user?.role === 'listener' ? '/listener/home' : '/';
 
   useEffect(() => {
     // Start looking for talkers when component mounts
@@ -45,7 +50,7 @@ const TalkerListPage = () => {
           <Button
             variant="outline"
             size="icon"
-            onClick={() => navigate("/listener/home")}
+            onClick={() => navigate(homePath)}
             className="text-primary hover:text-primary-foreground hover:bg-primary border-primary/40"
           >
             <ArrowLeft className="w-4 h-4" />

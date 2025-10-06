@@ -12,12 +12,17 @@ import { Shield, Bell, Eye, User, Edit3, Save, X, LogOut, Mail, MessageCircle, P
 import { useNavigate } from 'react-router-dom';
 import { useSecurity } from '@/contexts/SecurityContext';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 const SettingsPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, logout } = useAuth();
   const [notifications, setNotifications] = useState(true);
   const [analytics, setAnalytics] = useState(false);
+
+  // Get role-based home path
+  const homePath = user?.role === 'listener' ? '/listener/home' : '/';
   
   // User profile states
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -26,11 +31,21 @@ const SettingsPage = () => {
   const [tempDisplayName, setTempDisplayName] = useState(displayName);
   const [tempBio, setTempBio] = useState(bio);
 
-  const handleLogout = () => {
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out.",
-    });
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out.",
+      });
+      navigate('/auth');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to logout. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSaveProfile = () => {
@@ -60,7 +75,7 @@ const SettingsPage = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate('/')}
+            onClick={() => navigate(homePath)}
             aria-label="Go back"
           >
             <ArrowLeft className="h-5 w-5" />

@@ -7,22 +7,27 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import UserProfile from '@/components/UserProfile';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
-const navItems = [
-  { path: '/', label: 'Home', icon: Home },
-  { path: '/history', label: 'History', icon: HistoryIcon },
-  { path: '/settings', label: 'Settings', icon: Settings },
-];
-
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
+  const { user } = useAuth();
   const [mounted, setMounted] = useState(false);
+
+  // Get role-based home path
+  const homePath = user?.role === 'listener' ? '/listener/home' : '/';
+  
+  const navItems = [
+    { path: homePath, label: 'Home', icon: Home },
+    { path: '/history', label: 'History', icon: HistoryIcon },
+    { path: '/settings', label: 'Settings', icon: Settings },
+  ];
 
   useEffect(() => {
     setMounted(true);
@@ -46,7 +51,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-14 max-w-screen-2xl items-center justify-between">
           <div className="flex items-center space-x-2">
-            <Link to="/" className="flex items-center space-x-2">
+            <Link to={homePath} className="flex items-center space-x-2">
               <span className="font-bold text-primary">Plaro</span>
             </Link>
           </div>

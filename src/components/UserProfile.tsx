@@ -12,11 +12,13 @@ import { useNavigate } from 'react-router-dom';
 import { useSecurity } from '@/contexts/SecurityContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 const UserProfile = () => {
   const navigate = useNavigate();
   const { sessionId, clearSession } = useSecurity();
   const { toast } = useToast();
+  const { logout } = useAuth();
   
   // Profile state
   const [displayName, setDisplayName] = useState('Anonymous User');
@@ -39,9 +41,22 @@ const UserProfile = () => {
     fetchUserData();
   }, []);
 
-  const handleLogout = () => {
-    clearSession();
-    console.log('User logged out, session cleared');
+  const handleLogout = async () => {
+    try {
+      await logout();
+      clearSession();
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out.",
+      });
+      navigate('/auth');
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to logout. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleSettings = () => {

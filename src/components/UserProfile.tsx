@@ -29,35 +29,34 @@ const UserProfile = () => {
   const [tempBio, setTempBio] = useState(bio);
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isFetching, setIsFetching] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
   const [createdAt, setCreatedAt] = useState<string>('');
+  const [hasLoadedProfile, setHasLoadedProfile] = useState(false);
 
-  // Fetch user profile from server
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        setIsFetching(true);
-        const profile = await profileService.getProfile();
-        setDisplayName(profile.displayName || 'Anonymous User');
-        setEmail(profile.email || '');
-        setPhone(profile.phone || '');
-        setBio(profile.bio || '');
-        setCreatedAt(profile.createdAt || new Date().toISOString());
-        setTempDisplayName(profile.displayName || 'Anonymous User');
-        setTempBio(profile.bio || '');
-      } catch (error: any) {
-        console.error('Failed to fetch profile:', error);
-        toast({
-          title: "Error",
-          description: error.message || "Failed to load profile data.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsFetching(false);
-      }
-    };
-    fetchProfile();
-  }, [toast]);
+  // Fetch user profile from server only when dialog is opened
+  const fetchProfile = async () => {
+    try {
+      setIsFetching(true);
+      const profile = await profileService.getProfile();
+      setDisplayName(profile.displayName || 'Anonymous User');
+      setEmail(profile.email || '');
+      setPhone(profile.phone || '');
+      setBio(profile.bio || '');
+      setCreatedAt(profile.createdAt || new Date().toISOString());
+      setTempDisplayName(profile.displayName || 'Anonymous User');
+      setTempBio(profile.bio || '');
+      setHasLoadedProfile(true);
+    } catch (error: any) {
+      console.error('Failed to fetch profile:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to load profile data.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsFetching(false);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -113,10 +112,15 @@ const UserProfile = () => {
     setIsProfileDialogOpen(false);
   };
 
-  const handleOpenProfile = () => {
-    setTempDisplayName(displayName);
-    setTempBio(bio);
+  const handleOpenProfile = async () => {
     setIsProfileDialogOpen(true);
+    // Fetch profile data when opening the dialog for the first time or to refresh
+    if (!hasLoadedProfile) {
+      await fetchProfile();
+    } else {
+      setTempDisplayName(displayName);
+      setTempBio(bio);
+    }
   };
 
   return (

@@ -7,12 +7,12 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { User, Settings, LogOut, Shield, Edit3, Save, X } from 'lucide-react';
+import { User, Settings, LogOut, Shield, Edit3, Save, X, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSecurity } from '@/contexts/SecurityContext';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { profileService } from '@/services/profile';
 
 const UserProfile = () => {
   const navigate = useNavigate();
@@ -24,22 +24,40 @@ const UserProfile = () => {
   const [displayName, setDisplayName] = useState('Anonymous User');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [bio, setBio] = useState('Welcome to my mental health journey. I\'m here to find support and share experiences in a safe space.');
+  const [bio, setBio] = useState('');
   const [tempDisplayName, setTempDisplayName] = useState(displayName);
   const [tempBio, setTempBio] = useState(bio);
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isFetching, setIsFetching] = useState(true);
+  const [createdAt, setCreatedAt] = useState<string>('');
 
-  // Fetch user data from Supabase auth
+  // Fetch user profile from server
   useEffect(() => {
-    const fetchUserData = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setEmail(user.email || '');
-        setPhone(user.phone || '');
+    const fetchProfile = async () => {
+      try {
+        setIsFetching(true);
+        const profile = await profileService.getProfile();
+        setDisplayName(profile.displayName || 'Anonymous User');
+        setEmail(profile.email || '');
+        setPhone(profile.phone || '');
+        setBio(profile.bio || '');
+        setCreatedAt(profile.createdAt || new Date().toISOString());
+        setTempDisplayName(profile.displayName || 'Anonymous User');
+        setTempBio(profile.bio || '');
+      } catch (error: any) {
+        console.error('Failed to fetch profile:', error);
+        toast({
+          title: "Error",
+          description: error.message || "Failed to load profile data.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsFetching(false);
       }
     };
-    fetchUserData();
-  }, []);
+    fetchProfile();
+  }, [toast]);
 
   const handleLogout = async () => {
     try {
@@ -63,14 +81,30 @@ const UserProfile = () => {
     navigate('/settings');
   };
 
-  const handleSaveProfile = () => {
-    setDisplayName(tempDisplayName);
-    setBio(tempBio);
-    setIsProfileDialogOpen(false);
-    toast({
-      title: "Profile Updated",
-      description: "Your profile has been saved successfully.",
-    });
+  const handleSaveProfile = async () => {
+    try {
+      setIsLoading(true);
+      const updatedProfile = await profileService.updateProfile({
+        displayName: tempDisplayName,
+        bio: tempBio,
+      });
+      setDisplayName(updatedProfile.displayName || tempDisplayName);
+      setBio(updatedProfile.bio || tempBio);
+      setIsProfileDialogOpen(false);
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been saved successfully.",
+      });
+    } catch (error: any) {
+      console.error('Failed to save profile:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update profile.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCancelEdit = () => {
@@ -182,22 +216,33 @@ const UserProfile = () => {
               </p>
             </div>
             <div className="pt-2">
-              <div>
-                <p className="text-sm font-medium">Member Since</p>
-                <p className="text-xs text-muted-foreground">
-                  {new Date().toLocaleDateString()}
-                </p>
-              </div>
+              {createdAt && (
+                <div>
+                  <p className="text-sm font-medium">Member Since</p>
+                  <p className="text-xs text-muted-foreground">
+                    {new Date(createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
           <div className="flex justify-end space-x-2">
-            <Button variant="outline" onClick={handleCancelEdit}>
+            <Button variant="outline" onClick={handleCancelEdit} disabled={isLoading}>
               <X className="h-4 w-4 mr-2" />
               Cancel
             </Button>
-            <Button onClick={handleSaveProfile}>
-              <Save className="h-4 w-4 mr-2" />
-              Save
+            <Button onClick={handleSaveProfile} disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save
+                </>
+              )}
             </Button>
           </div>
         </DialogContent>

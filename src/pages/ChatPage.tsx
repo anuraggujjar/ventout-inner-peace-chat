@@ -34,6 +34,7 @@ const ChatPage = () => {
         setChatSession,
         clearChatSession,
         onTextMessage,
+        onVoiceMessage,
         onPartnerDisconnected,
     } = useSocketContext();
 
@@ -70,7 +71,7 @@ const ChatPage = () => {
                             text: msg.content,
                             timestamp: new Date(msg.createdAt),
                             createdAt: new Date(msg.createdAt),
-                            type: msg.type || 'text',
+                            type: msg.type || (msg.audioData ? 'voice' : 'text'),
                             audioData: msg.audioData,
                             duration: msg.duration,
                         }));
@@ -94,10 +95,27 @@ const ChatPage = () => {
         }
     }, [currentConvoId, currentRoom, toast]);
 
-    // Listen for new incoming messages from the socket
+    // Listen for new incoming messages from the socket (text and voice)
     useEffect(() => {
-        const removeMessageListener = onTextMessage((newMessage) => {
+        const removeTextListener = onTextMessage((newMessage) => {
             setMessages(prev => [...prev, newMessage]);
+        });
+
+        const removeVoiceListener = onVoiceMessage((voiceMsg) => {
+            const normalized = {
+                id: voiceMsg.id,
+                roomId: voiceMsg.roomId,
+                senderId: voiceMsg.senderId,
+                sender: voiceMsg.senderId,
+                content: '',
+                text: '',
+                timestamp: voiceMsg.createdAt ? new Date(voiceMsg.createdAt) : new Date(),
+                createdAt: voiceMsg.createdAt ? new Date(voiceMsg.createdAt) : new Date(),
+                type: 'voice' as const,
+                audioData: voiceMsg.audioData,
+                duration: voiceMsg.duration,
+            };
+            setMessages(prev => [...prev, normalized]);
         });
         
         const removePartnerListener = onPartnerDisconnected(() => {
@@ -110,10 +128,11 @@ const ChatPage = () => {
         });
 
         return () => {
-            removeMessageListener();
+            removeTextListener();
+            removeVoiceListener();
             removePartnerListener();
         };
-    }, [onTextMessage, onPartnerDisconnected, clearChatSession, toast]);
+    }, [onTextMessage, onVoiceMessage, onPartnerDisconnected, clearChatSession, toast]);
 
     // Auto-scroll when new messages arrive
     useEffect(() => {

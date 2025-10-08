@@ -43,6 +43,11 @@ export const useSocket = () => {
         return () => socketService.offTextMessage(callback);
     }, []);
 
+    const onVoiceMessage = useCallback((callback: (message: SocketMessage) => void) => {
+        socketService.onVoiceMessage(callback);
+        return () => socketService.offVoiceMessage(callback);
+    }, []);
+
     const onPartnerDisconnected = useCallback((callback: (data: { roomId: string; reason: string }) => void) => {
         socketService.onPartnerDisconnected(callback);
         return () => socketService.offPartnerDisconnected(callback);

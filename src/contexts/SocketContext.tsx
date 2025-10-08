@@ -1,6 +1,6 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 import { useSocket } from '@/hooks/useSocket';
-import { UserInfo, SocketMessage } from '@/services/socket';
+import { UserInfo, SocketMessage, socketService } from '@/services/socket';
 import { Message } from '@/types/message';
 
 interface SocketContextType {
@@ -33,6 +33,7 @@ interface SocketContextType {
   
   // Event listeners for components
   onTextMessage: (callback: (message: SocketMessage) => void) => () => void;
+  onVoiceMessage: (callback: (message: SocketMessage) => void) => () => void;
   onPartnerDisconnected: (callback: (data: { roomId: string; reason: string }) => void) => () => void;
 }
 
@@ -47,8 +48,11 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
 
   const value = {
     ...socketData,
+    onVoiceMessage: (callback: (message: SocketMessage) => void) => {
+      socketService.onVoiceMessage(callback);
+      return () => socketService.offVoiceMessage(callback);
+    },
   };
-
   return (
     <SocketContext.Provider value={value}>
       {children}

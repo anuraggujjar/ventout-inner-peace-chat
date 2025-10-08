@@ -274,6 +274,10 @@ class SocketService {
         this.socket?.on('voiceMessage', callback);
     }
 
+    offVoiceMessage(callback: (message: SocketMessage) => void): void {
+        this.socket?.off('voiceMessage', callback);
+    }
+
     onPartnerTyping(callback: (data: { isTyping: boolean; roomId: string }) => void): void {
         this.socket?.on('partnerTyping', callback);
     }

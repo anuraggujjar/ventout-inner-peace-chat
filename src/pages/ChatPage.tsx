@@ -159,6 +159,24 @@ const ChatPage = () => {
 
     const handleSendVoiceMessage = (audioData: string, duration: number) => {
         if (connectionStatus === 'connected' && currentRoom && user) {
+            // Add voice message to local state immediately (optimistic update)
+            const voiceMessage = {
+                id: `voice-${Date.now()}`,
+                roomId: currentRoom,
+                senderId: user.id,
+                sender: user.id,
+                content: '',
+                text: '',
+                timestamp: new Date(),
+                createdAt: new Date(),
+                type: 'voice' as const,
+                audioData,
+                duration,
+            };
+            
+            setMessages(prev => [...prev, voiceMessage]);
+            
+            // Send to server
             sendVoiceMessage(audioData, duration);
         }
     };

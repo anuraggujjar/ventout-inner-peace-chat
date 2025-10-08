@@ -18,7 +18,7 @@ interface SocketContextType {
   joinWaitingQueue: () => void;
   leaveWaitingQueue: () => void;
   sendTextMessage: (text: string) => void;
-  sendVoiceMessage: (audioData: string) => void;
+  sendVoiceMessage: (audioData: string, duration: number) => void;
   startTyping: () => void;
   stopTyping: () => void;
   leaveChat: () => void;

@@ -105,6 +105,7 @@ export const useSocket = () => {
                 timestamp,
                 type: socketMessage.type || 'text',
                 audioData: socketMessage.audioData,
+                duration: socketMessage.duration,
             };
             
             setMessages(prevMessages => {
@@ -181,9 +182,10 @@ export const useSocket = () => {
         }
     }, [currentRoom, user]);
 
-    const sendVoiceMessage = useCallback((audioData: string) => {
+    const sendVoiceMessage = useCallback((audioData: string, duration: number) => {
         if (currentRoom && user) {
-            socketService.sendVoiceMessage(currentRoom, user.id, audioData);
+            console.log('Sending voice message with duration:', duration);
+            socketService.sendVoiceMessage(currentRoom, user.id, audioData, duration);
         }
     }, [currentRoom, user]);
 

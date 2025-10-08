@@ -159,7 +159,7 @@ const ChatPage = () => {
 
     const handleSendVoiceMessage = (audioData: string, duration: number) => {
         if (connectionStatus === 'connected' && currentRoom && user) {
-            sendVoiceMessage(audioData);
+            sendVoiceMessage(audioData, duration);
         }
     };
 

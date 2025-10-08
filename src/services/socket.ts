@@ -8,6 +8,7 @@ export interface SocketMessage {
   senderId: string;
   text?: string;
   audioData?: string;
+  duration?: number;
   createdAt: Date;
   type: 'text' | 'voice';
   status?: 'sent' | 'delivered' | 'read';
@@ -233,9 +234,17 @@ class SocketService {
         this.socket.emit('textMessage', { roomId, senderId, text });
     }
 
-    sendVoiceMessage(roomId: string, senderId: string, audioData: string): void {
+    sendVoiceMessage(roomId: string, senderId: string, audioData: string, duration: number): void {
         if (!this.socket) throw new Error('Socket not connected');
-        this.socket.emit('voiceMessage', { roomId, senderId, audioData });
+        console.log('Emitting voice message:', { roomId, senderId, audioDataLength: audioData.length, duration });
+        this.socket.emit('voiceMessage', { 
+            roomId, 
+            senderId, 
+            audioData, 
+            duration,
+            type: 'voice',
+            timestamp: new Date().toISOString()
+        });
     }
 
     markMessageAsRead(messageId: string, roomId: string): void {

@@ -79,7 +79,11 @@ const VoiceRecorder = ({ isOpen, onClose, onSendVoiceMessage }: VoiceRecorderPro
       setCurrentTime(0);
       
       intervalRef.current = window.setInterval(() => {
-        setCurrentTime(prev => prev + 1);
+        setCurrentTime(prev => {
+          const newTime = prev + 1;
+          setDuration(newTime); // Keep duration in sync with recording time
+          return newTime;
+        });
       }, 1000);
       
     } catch (error) {

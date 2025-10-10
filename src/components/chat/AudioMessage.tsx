@@ -22,40 +22,52 @@ const AudioMessage = ({ audioData, duration, isCurrentUser }: AudioMessageProps)
 
   const togglePlayback = () => {
     if (!audioRef.current) {
-      // Create audio with proper format specification
-      const audioBlob = new Blob([
-        new Uint8Array(
-          atob(audioData)
-            .split('')
-            .map(char => char.charCodeAt(0))
-        )
-      ], { type: 'audio/webm; codecs=opus' });
+      console.log('Creating audio element for playback');
       
-      const audioUrl = URL.createObjectURL(audioBlob);
-      const audio = new Audio(audioUrl);
-      audioRef.current = audio;
-      
-      audio.ontimeupdate = () => {
-        setCurrentTime(audio.currentTime);
-      };
-      
-      audio.onended = () => {
-        setIsPlaying(false);
-        setCurrentTime(0);
-        URL.revokeObjectURL(audioUrl);
-      };
-      
-      audio.onloadedmetadata = () => {
-        // Update duration from actual audio if available
-        if (audio.duration && audio.duration > 0) {
-          console.log('Audio loaded, actual duration:', audio.duration);
+      try {
+        // Decode base64 to binary
+        const binaryString = atob(audioData);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
         }
-      };
-      
-      audio.onerror = (error) => {
-        console.error('Audio error:', error);
-        setIsPlaying(false);
-      };
+        
+        // Create blob with correct MIME type
+        const audioBlob = new Blob([bytes], { type: 'audio/webm' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        
+        console.log('Audio blob created:', { 
+          size: audioBlob.size, 
+          type: audioBlob.type,
+          url: audioUrl 
+        });
+        
+        const audio = new Audio(audioUrl);
+        audioRef.current = audio;
+        
+        audio.ontimeupdate = () => {
+          setCurrentTime(audio.currentTime);
+        };
+        
+        audio.onended = () => {
+          console.log('Audio playback ended');
+          setIsPlaying(false);
+          setCurrentTime(0);
+          URL.revokeObjectURL(audioUrl);
+        };
+        
+        audio.onloadedmetadata = () => {
+          console.log('Audio metadata loaded, duration:', audio.duration);
+        };
+        
+        audio.onerror = (error) => {
+          console.error('Audio playback error:', error, audio.error);
+          setIsPlaying(false);
+        };
+      } catch (error) {
+        console.error('Error creating audio:', error);
+        return;
+      }
     }
 
     if (isPlaying) {

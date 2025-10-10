@@ -12,7 +12,10 @@ interface AudioMessageProps {
 const AudioMessage = ({ audioData, duration, isCurrentUser }: AudioMessageProps) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
+  const [metaDuration, setMetaDuration] = useState<number | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const objectUrlRef = useRef<string | null>(null);
+  const triedFallbackRef = useRef(false);
 
   console.log('AudioMessage rendering with props:', { 
     audioDataLength: audioData?.length, 
@@ -25,47 +28,110 @@ const AudioMessage = ({ audioData, duration, isCurrentUser }: AudioMessageProps)
       console.log('Creating audio element for playback, audioData length:', audioData.length);
       
       try {
-        // Use data URL directly instead of blob URL to avoid security issues
-        const dataUrl = `data:audio/webm;base64,${audioData}`;
-        
-        console.log('Creating audio with data URL');
-        
-        const audio = new Audio(dataUrl);
-        audioRef.current = audio;
-        
-        audio.ontimeupdate = () => {
-          setCurrentTime(audio.currentTime);
+        const cleanBase64 = (audioData || '').replace(/\s/g, '');
+        const binaryString = atob(cleanBase64);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+
+        const buildAudio = (mime: string) => {
+          if (objectUrlRef.current) {
+            try { URL.revokeObjectURL(objectUrlRef.current); } catch {}
+            objectUrlRef.current = null;
+          }
+          const blob = new Blob([bytes], { type: mime });
+          const url = URL.createObjectURL(blob);
+          objectUrlRef.current = url;
+
+          const audio = new Audio(url);
+          audioRef.current = audio;
+          audio.preload = 'metadata';
+
+          audio.ontimeupdate = () => {
+            setCurrentTime(audio.currentTime);
+          };
+          
+          audio.onended = () => {
+            console.log('Audio playback ended');
+            setIsPlaying(false);
+            setCurrentTime(0);
+          };
+          
+          audio.onloadedmetadata = () => {
+            console.log('Audio metadata loaded, duration:', audio.duration);
+            if (audio.duration && !Number.isNaN(audio.duration)) {
+              setMetaDuration(audio.duration);
+            }
+          };
+          
+          audio.onerror = (error) => {
+            console.error('Audio playback error:', error, (audio as any).error);
+            setIsPlaying(false);
+          };
         };
-        
-        audio.onended = () => {
-          console.log('Audio playback ended');
-          setIsPlaying(false);
-          setCurrentTime(0);
-        };
-        
-        audio.onloadedmetadata = () => {
-          console.log('Audio metadata loaded, duration:', audio.duration);
-        };
-        
-        audio.onerror = (error) => {
-          console.error('Audio playback error:', error, audio.error);
-          setIsPlaying(false);
-        };
+
+        // Try with opus first then plain webm
+        try {
+          buildAudio('audio/webm; codecs=opus');
+        } catch {
+          buildAudio('audio/webm');
+        }
       } catch (error) {
         console.error('Error creating audio:', error);
         return;
       }
     }
 
+    if (!audioRef.current) return;
+
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
-      audioRef.current.play().catch(error => {
-        console.error('Error playing audio:', error);
-        setIsPlaying(false);
+      audioRef.current.play().then(() => {
+        setIsPlaying(true);
+      }).catch(err => {
+        console.error('Error playing audio:', err);
+        if (!triedFallbackRef.current) {
+          triedFallbackRef.current = true;
+          try {
+            const cleanBase64 = (audioData || '').replace(/\s/g, '');
+            const binaryString = atob(cleanBase64);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+              bytes[i] = binaryString.charCodeAt(i);
+            }
+            if (objectUrlRef.current) {
+              try { URL.revokeObjectURL(objectUrlRef.current); } catch {}
+              objectUrlRef.current = null;
+            }
+            const blob = new Blob([bytes], { type: 'audio/webm' });
+            const url = URL.createObjectURL(blob);
+            objectUrlRef.current = url;
+
+            const audio = new Audio(url);
+            audioRef.current = audio;
+            audio.preload = 'metadata';
+            audio.ontimeupdate = () => setCurrentTime(audio.currentTime);
+            audio.onended = () => { setIsPlaying(false); setCurrentTime(0); };
+            audio.onloadedmetadata = () => {
+              if (audio.duration && !Number.isNaN(audio.duration)) setMetaDuration(audio.duration);
+            };
+            audio.onerror = (e) => { console.error('Fallback audio error:', e, (audio as any).error); setIsPlaying(false); };
+
+            audio.play().then(() => setIsPlaying(true)).catch(e2 => {
+              console.error('Fallback play failed:', e2);
+              setIsPlaying(false);
+            });
+          } catch (e) {
+            console.error('Error rebuilding audio with fallback:', e);
+            setIsPlaying(false);
+          }
+        } else {
+          setIsPlaying(false);
+        }
       });
-      setIsPlaying(true);
     }
   };
 

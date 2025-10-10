@@ -22,27 +22,15 @@ const AudioMessage = ({ audioData, duration, isCurrentUser }: AudioMessageProps)
 
   const togglePlayback = () => {
     if (!audioRef.current) {
-      console.log('Creating audio element for playback');
+      console.log('Creating audio element for playback, audioData length:', audioData.length);
       
       try {
-        // Decode base64 to binary
-        const binaryString = atob(audioData);
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-          bytes[i] = binaryString.charCodeAt(i);
-        }
+        // Use data URL directly instead of blob URL to avoid security issues
+        const dataUrl = `data:audio/webm;base64,${audioData}`;
         
-        // Create blob with correct MIME type
-        const audioBlob = new Blob([bytes], { type: 'audio/webm' });
-        const audioUrl = URL.createObjectURL(audioBlob);
+        console.log('Creating audio with data URL');
         
-        console.log('Audio blob created:', { 
-          size: audioBlob.size, 
-          type: audioBlob.type,
-          url: audioUrl 
-        });
-        
-        const audio = new Audio(audioUrl);
+        const audio = new Audio(dataUrl);
         audioRef.current = audio;
         
         audio.ontimeupdate = () => {
@@ -53,7 +41,6 @@ const AudioMessage = ({ audioData, duration, isCurrentUser }: AudioMessageProps)
           console.log('Audio playback ended');
           setIsPlaying(false);
           setCurrentTime(0);
-          URL.revokeObjectURL(audioUrl);
         };
         
         audio.onloadedmetadata = () => {

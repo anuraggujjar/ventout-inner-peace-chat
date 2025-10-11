@@ -19,6 +19,7 @@ const VoiceRecorder = ({ isOpen, onClose, onSendVoiceMessage }: VoiceRecorderPro
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const intervalRef = useRef<number | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const recordedMimeTypeRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (isOpen && !isRecording && !recordedAudio) {
@@ -42,7 +43,19 @@ const VoiceRecorder = ({ isOpen, onClose, onSendVoiceMessage }: VoiceRecorderPro
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
       
-      const mediaRecorder = new MediaRecorder(stream);
+      // Pick the best available mime (Safari prefers mp4/aac)
+      const preferredTypes = [
+        'audio/mp4; codecs=mp4a.40.2',
+        'audio/mp4',
+        'audio/webm; codecs=opus',
+        'audio/webm',
+        'audio/ogg; codecs=opus',
+        'audio/ogg',
+      ];
+      const chosen = preferredTypes.find((t) => (window as any).MediaRecorder?.isTypeSupported?.(t));
+      recordedMimeTypeRef.current = chosen || null;
+
+      const mediaRecorder = chosen ? new MediaRecorder(stream, { mimeType: chosen }) : new MediaRecorder(stream);
       mediaRecorderRef.current = mediaRecorder;
       
       const audioChunks: Blob[] = [];
@@ -52,7 +65,7 @@ const VoiceRecorder = ({ isOpen, onClose, onSendVoiceMessage }: VoiceRecorderPro
       };
       
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        const audioBlob = new Blob(audioChunks, { type: recordedMimeTypeRef.current || 'audio/webm' });
         const reader = new FileReader();
         reader.onload = () => {
           const base64 = (reader.result as string).split(',')[1];
@@ -111,7 +124,8 @@ const VoiceRecorder = ({ isOpen, onClose, onSendVoiceMessage }: VoiceRecorderPro
 
   const playRecording = () => {
     if (recordedAudio && !isPlaying) {
-      const audio = new Audio(`data:audio/webm;base64,${recordedAudio}`);
+      const mime = recordedMimeTypeRef.current || 'audio/webm';
+      const audio = new Audio(`data:${mime};base64,${recordedAudio}`);
       audioRef.current = audio;
       
       audio.onended = () => {

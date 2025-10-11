@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Heart, MessageCircle } from 'lucide-react';
-import AudioMessage from './AudioMessage';
+import SmartAudioMessage from './SmartAudioMessage';
 import { Message } from '@/types/message';
 import { User } from '@/services/auth';
 
@@ -90,7 +90,7 @@ const MessageList = ({ messages, userRole, partnerTyping, messagesEndRef, user }
                     
                     {msg.type === 'voice' && msg.audioData && msg.duration ? (
                       <div className="w-full">
-                        <AudioMessage 
+                        <SmartAudioMessage 
                           audioData={msg.audioData}
                           duration={msg.duration}
                           isCurrentUser={isCurrentUser}

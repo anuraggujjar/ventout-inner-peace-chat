@@ -12,7 +12,6 @@ export const useSocket = () => {
     const navigate = useNavigate();
 
     const [isConnected, setIsConnected] = useState(false);
-    const [partner, setPartner] = useState<UserInfo | null>(null);
     const [availableTalkers, setAvailableTalkers] = useState<UserInfo[]>([]);
     const [messages, setMessages] = useState<Message[]>([]);
     const [partnerTyping, setPartnerTyping] = useState(false);
@@ -25,6 +24,24 @@ export const useSocket = () => {
         localStorage.getItem('currentRoomId')
     );
 
+    // Initialize partner from localStorage on mount
+    const getStoredPartner = (): UserInfo | null => {
+        const stored = localStorage.getItem('currentPartner');
+        return stored ? JSON.parse(stored) : null;
+    };
+
+    const [partner, setPartnerState] = useState<UserInfo | null>(getStoredPartner());
+
+    // Wrapper to update partner and persist to localStorage
+    const setPartner = useCallback((newPartner: UserInfo | null) => {
+        setPartnerState(newPartner);
+        if (newPartner) {
+            localStorage.setItem('currentPartner', JSON.stringify(newPartner));
+        } else {
+            localStorage.removeItem('currentPartner');
+        }
+    }, []);
+
     const leaveChat = useCallback(() => {
         if (currentRoom) {
             socketService.leaveRoom(currentRoom);
@@ -35,8 +52,9 @@ export const useSocket = () => {
             setCurrentConvoId(null);
             localStorage.removeItem('currentConvoId');
             localStorage.removeItem('currentRoomId');
+            localStorage.removeItem('currentPartner');
         }
-    }, [currentRoom]);
+    }, [currentRoom, setPartner]);
 
     const onTextMessage = useCallback((callback: (message: SocketMessage) => void) => {
         socketService.onTextMessage(callback);
@@ -53,12 +71,20 @@ export const useSocket = () => {
         return () => socketService.offPartnerDisconnected(callback);
     }, []);
 
+    // Rejoin room on reconnect with existing session
     useEffect(() => {
-        if (socketService.connected && currentRoom && currentConvoId) {
-            socketService.joinRoom(currentRoom); 
-            console.log(`Rejoined room ${currentRoom} on reconnect.`);
+        if (socketService.connected && currentRoom && currentConvoId && partner) {
+            console.log(`Reconnecting to existing session - Room: ${currentRoom}, Partner:`, partner);
+            socketService.joinRoom(currentRoom);
+            
+            // Notify that we're back in the chat
+            toast({ 
+                title: "Reconnected", 
+                description: "You've been reconnected to your chat session.",
+                duration: 2000
+            });
         }
-    }, [socketService.connected, currentRoom, currentConvoId]);
+    }, [socketService.connected]);
 
     const setupEventListeners = useCallback(() => {
         if (!socketService.connected) return;
@@ -238,8 +264,10 @@ export const useSocket = () => {
     const clearChatSession = () => {
         localStorage.removeItem('currentConvoId');
         localStorage.removeItem('currentRoomId');
+        localStorage.removeItem('currentPartner');
         setCurrentConvoId(null);
         setCurrentRoom(null);
+        setPartner(null);
     };
     
     return {

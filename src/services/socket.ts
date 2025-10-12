@@ -315,6 +315,7 @@ class SocketService {
         if (!this.socket) {
             throw new Error('Socket not connected');
         }
+        console.log('Joining/Rejoining room:', roomId);
         this.socket.emit('joinRoom', { roomId });
     }
 

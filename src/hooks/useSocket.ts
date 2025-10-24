@@ -15,6 +15,7 @@ export const useSocket = () => {
     const [availableTalkers, setAvailableTalkers] = useState<UserInfo[]>([]);
     const [messages, setMessages] = useState<Message[]>([]);
     const [partnerTyping, setPartnerTyping] = useState(false);
+    const [partnerOnline, setPartnerOnline] = useState(true);
 
     const hasAttemptedConnection = useRef(false);
     const [currentConvoId, setCurrentConvoId] = useState<string | null>(
@@ -49,6 +50,7 @@ export const useSocket = () => {
             setPartner(null);
             setMessages([]);
             setPartnerTyping(false);
+            setPartnerOnline(false);
             setCurrentConvoId(null);
             localStorage.removeItem('currentConvoId');
             localStorage.removeItem('currentRoomId');
@@ -102,15 +104,23 @@ export const useSocket = () => {
             localStorage.setItem('currentRoomId', roomId);
             setCurrentConvoId(convoId);
             setMessages([]);
+            setPartnerOnline(true);
             navigate('/chat');
             toast({ title: "Chat Started", description: `Now chatting with a ${chatPartner.role}` });
         });
 
-        socketService.onPartnerDisconnected(({ roomId }) => {
-            if (roomId === currentRoom) {
+        socketService.onPartnerDisconnected(({ roomId, reason }) => {
+            if (roomId !== currentRoom) return;
+            const r = (reason || '').toLowerCase();
+            const endReasons = ['left', 'ended', 'room_closed'];
+            if (endReasons.includes(r)) {
                 leaveChat();
-                toast({ title: "Partner Disconnected", description: "The conversation has ended.", variant: "destructive" });
+                toast({ title: 'Partner left', description: 'The conversation has ended.', variant: 'destructive' });
                 navigate('/');
+            } else {
+                setPartnerTyping(false);
+                setPartnerOnline(false);
+                toast({ title: 'Partner disconnected', description: 'Waiting for them to reconnect...' });
             }
         });
 
@@ -128,6 +138,9 @@ export const useSocket = () => {
             
             console.log('Received message:', socketMessage);
             const isOwnMessage = socketMessage.senderId === user?.id;
+            if (!isOwnMessage) {
+                setPartnerOnline(true);
+            }
 
             const newMessage: Message = {
                 id: socketMessage.id,
@@ -154,6 +167,7 @@ export const useSocket = () => {
         socketService.onPartnerTyping(({ isTyping, roomId }) => {
             if (roomId === currentRoom) {
                 setPartnerTyping(isTyping);
+                if (isTyping) setPartnerOnline(true);
             }
         });
 
@@ -277,6 +291,7 @@ export const useSocket = () => {
         availableTalkers,
         messages,
         partnerTyping,
+        partnerOnline,
         requestChat,
         sendTextMessage,
         sendVoiceMessage,

@@ -58,6 +58,29 @@ class AuthService {
   private isRefreshingPromise: Promise<string | null> | null = null;
   private googleGisReady = false;
 
+  private getAuthErrorMessage(error: any, fallback: string): string {
+    const status = error?.response?.status;
+    const responseData = error?.response?.data;
+
+    if (status === 503 && typeof responseData === 'string' && responseData.includes('Service Suspended')) {
+      return 'Registration is temporarily unavailable because the authentication server is suspended. Please reactivate the backend service and try again.';
+    }
+
+    if (status === 503) {
+      return 'The authentication server is temporarily unavailable. Please try again in a few minutes.';
+    }
+
+    if (error?.code === 'ECONNABORTED') {
+      return 'The authentication server is taking too long to respond. Please wait a minute and try again.';
+    }
+
+    if (!error?.response) {
+      return 'Unable to reach the authentication server. Please check your connection and try again.';
+    }
+
+    return responseData?.message || fallback;
+  }
+
   constructor() {
     this.setupInterceptors();
     // Initialize Google Auth async to prevent blocking constructor
@@ -266,7 +289,7 @@ class AuthService {
       await this.storeAuthData(authData);
       return authData;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Login failed');
+      throw new Error(this.getAuthErrorMessage(error, 'Login failed'));
     }
   }
 
@@ -277,7 +300,7 @@ class AuthService {
       await this.storeAuthData(authData);
       return authData;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Registration failed');
+      throw new Error(this.getAuthErrorMessage(error, 'Registration failed'));
     }
   }
 

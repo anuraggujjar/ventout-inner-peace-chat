@@ -40,7 +40,7 @@ const UserProfile = () => {
       const profile = await profileService.getProfile();
       setDisplayName(profile.displayName || 'Anonymous User');
       setEmail(profile.email || '');
-      setPhone(profile.phone || '');
+      setPhone('');
       setBio(profile.bio || '');
       setCreatedAt(profile.createdAt || new Date().toISOString());
       setTempDisplayName(profile.displayName || 'Anonymous User');

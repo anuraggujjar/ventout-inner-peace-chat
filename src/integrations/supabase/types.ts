@@ -10,99 +10,223 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
       chat_requests: {
         Row: {
-          anonymous_id: string
           created_at: string
           feeling: string | null
           id: string
-          status: string
-          topic: string
+          listener_id: string | null
+          status: Database["public"]["Enums"]["request_status"]
+          talker_id: string
+          topic: string | null
           updated_at: string
-          user_id: string | null
         }
         Insert: {
-          anonymous_id: string
           created_at?: string
           feeling?: string | null
           id?: string
-          status?: string
-          topic: string
+          listener_id?: string | null
+          status?: Database["public"]["Enums"]["request_status"]
+          talker_id: string
+          topic?: string | null
           updated_at?: string
-          user_id?: string | null
         }
         Update: {
-          anonymous_id?: string
           created_at?: string
           feeling?: string | null
           id?: string
-          status?: string
-          topic?: string
+          listener_id?: string | null
+          status?: Database["public"]["Enums"]["request_status"]
+          talker_id?: string
+          topic?: string | null
           updated_at?: string
-          user_id?: string | null
         }
         Relationships: []
       }
-      listener_sessions: {
+      conversations: {
         Row: {
-          chat_request_id: string | null
           ended_at: string | null
           id: string
-          listener_id: string | null
+          listener_id: string
+          request_id: string | null
           started_at: string
-          status: string
+          talker_id: string
         }
         Insert: {
-          chat_request_id?: string | null
           ended_at?: string | null
           id?: string
-          listener_id?: string | null
+          listener_id: string
+          request_id?: string | null
           started_at?: string
-          status?: string
+          talker_id: string
         }
         Update: {
-          chat_request_id?: string | null
           ended_at?: string | null
           id?: string
-          listener_id?: string | null
+          listener_id?: string
+          request_id?: string | null
           started_at?: string
-          status?: string
+          talker_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "listener_sessions_chat_request_id_fkey"
-            columns: ["chat_request_id"]
+            foreignKeyName: "conversations_request_id_fkey"
+            columns: ["request_id"]
             isOneToOne: false
             referencedRelation: "chat_requests"
             referencedColumns: ["id"]
           },
         ]
       }
-      user_profiles: {
+      feedback: {
         Row: {
+          comment: string | null
+          conversation_id: string
+          created_at: string
+          from_user: string
+          id: string
+          rating: number | null
+        }
+        Insert: {
+          comment?: string | null
+          conversation_id: string
+          created_at?: string
+          from_user: string
+          id?: string
+          rating?: number | null
+        }
+        Update: {
+          comment?: string | null
+          conversation_id?: string
+          created_at?: string
+          from_user?: string
+          id?: string
+          rating?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      listener_details: {
+        Row: {
+          interests: string[]
+          is_available: boolean
+          topics: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          interests?: string[]
+          is_available?: boolean
+          topics?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          interests?: string[]
+          is_available?: boolean
+          topics?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      messages: {
+        Row: {
+          audio_path: string | null
+          content: string | null
+          conversation_id: string
+          created_at: string
+          duration_seconds: number | null
+          id: string
+          sender_id: string
+          type: Database["public"]["Enums"]["message_type"]
+        }
+        Insert: {
+          audio_path?: string | null
+          content?: string | null
+          conversation_id: string
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          sender_id: string
+          type?: Database["public"]["Enums"]["message_type"]
+        }
+        Update: {
+          audio_path?: string | null
+          content?: string | null
+          conversation_id?: string
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          sender_id?: string
+          type?: Database["public"]["Enums"]["message_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          bio: string | null
           created_at: string
           display_name: string | null
           id: string
-          role: string
           updated_at: string
         }
         Insert: {
+          avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           display_name?: string | null
           id: string
-          role?: string
           updated_at?: string
         }
         Update: {
+          avatar_url?: string | null
+          bio?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
-          role?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -111,13 +235,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      is_listener: {
-        Args: { user_id: string }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
         Returns: boolean
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "talker" | "listener" | "admin"
+      message_type: "text" | "voice"
+      request_status: "pending" | "accepted" | "declined" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -244,6 +373,10 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["talker", "listener", "admin"],
+      message_type: ["text", "voice"],
+      request_status: ["pending", "accepted", "declined", "cancelled"],
+    },
   },
 } as const

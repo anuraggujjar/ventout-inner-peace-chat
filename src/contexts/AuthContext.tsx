@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { User, authService } from '@/services/auth';
 
 interface AuthContextType {
@@ -6,7 +7,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   logout: () => Promise<void>;
-  refreshUser: () => Promise<void>;
+  refreshUser: () => Promise<User | null>;
   currentConvoId: string | null;
   currentRoomId: string | null;
   setChatSession: (convoId: string, roomId: string) => void;
@@ -21,32 +22,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentConvoId, setCurrentConvoId] = useState<string | null>(localStorage.getItem('currentConvoId'));
   const [currentRoomId, setCurrentRoomId] = useState<string | null>(localStorage.getItem('currentRoomId'));
 
-  useEffect(() => {
-    initializeAuth();
-  }, []);
-
-  const initializeAuth = async () => {
+  const loadUser = async () => {
     try {
-      // Check for existing session
-      const [isAuth, storedUser] = await Promise.all([
-        authService.isAuthenticated(),
-        authService.getStoredUser(),
-      ]);
-
-      if (isAuth && storedUser) {
-        setUser(storedUser);
-      }
-    } catch (error) {
-      console.error('Error initializing auth:', error);
-    } finally {
-      setIsLoading(false);
+      const u = await authService.getStoredUser();
+      setUser(u);
+      return u;
+    } catch (err) {
+      console.error('Error loading user:', err);
+      setUser(null);
+      return null;
     }
   };
 
-  const refreshUser = async () => {
-    const storedUser = await authService.getStoredUser();
-    setUser(storedUser);
-  };
+  useEffect(() => {
+    // Set up the auth listener BEFORE fetching the session.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        setUser(null);
+      } else {
+        // Defer Supabase calls to avoid deadlock inside the callback.
+        setTimeout(() => { void loadUser(); }, 0);
+      }
+    });
+
+    (async () => {
+      await loadUser();
+      setIsLoading(false);
+    })();
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const refreshUser = async () => loadUser();
 
   const logout = async () => {
     try {
@@ -72,19 +79,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCurrentRoomId(null);
   };
 
-  const value = {
-    user,
-    isLoading,
-    isAuthenticated: !!user,
-    logout,
-    refreshUser,
-    currentConvoId,
-    currentRoomId,
-    setChatSession,
-    clearChatSession,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{
+      user,
+      isLoading,
+      isAuthenticated: !!user,
+      logout,
+      refreshUser,
+      currentConvoId,
+      currentRoomId,
+      setChatSession,
+      clearChatSession,
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => {

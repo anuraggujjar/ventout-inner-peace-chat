@@ -1,12 +1,8 @@
-import axios from 'axios';
-import { authService } from './auth';
-
-const API_BASE_URL = 'https://ventoutserver.onrender.com';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface UserProfile {
   id: string;
   email?: string;
-  phone?: string;
   displayName?: string;
   bio?: string;
   role?: string;
@@ -19,45 +15,41 @@ export interface UpdateProfileData {
 }
 
 class ProfileService {
-  private apiClient = axios.create({
-    baseURL: API_BASE_URL,
-    timeout: 10000,
-  });
-
-  constructor() {
-    this.setupInterceptors();
-  }
-
-  private setupInterceptors() {
-    this.apiClient.interceptors.request.use(
-      async (config) => {
-        const token = await authService.getToken();
-        if (token) {
-          if (!config.headers) config.headers = {} as any;
-          (config.headers as any).Authorization = `Bearer ${token}`;
-        }
-        return config;
-      },
-      (error) => Promise.reject(error)
-    );
-  }
-
   async getProfile(): Promise<UserProfile> {
-    try {
-      const response = await this.apiClient.get('/user/profile');
-      return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to fetch profile');
-    }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('id, display_name, bio, created_at')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (error) throw new Error(error.message);
+
+    return {
+      id: user.id,
+      email: user.email ?? undefined,
+      displayName: profile?.display_name ?? undefined,
+      bio: profile?.bio ?? undefined,
+      createdAt: profile?.created_at ?? undefined,
+    };
   }
 
   async updateProfile(data: UpdateProfileData): Promise<UserProfile> {
-    try {
-      const response = await this.apiClient.patch('/user/profile', data);
-      return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to update profile');
-    }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        display_name: data.displayName,
+        bio: data.bio,
+      })
+      .eq('id', user.id);
+
+    if (error) throw new Error(error.message);
+    return this.getProfile();
   }
 }
 

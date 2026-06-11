@@ -10,111 +10,17 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
-      chat_requests: {
-        Row: {
-          anonymous_id: string
-          created_at: string
-          feeling: string | null
-          id: string
-          status: string
-          topic: string
-          updated_at: string
-          user_id: string | null
-        }
-        Insert: {
-          anonymous_id: string
-          created_at?: string
-          feeling?: string | null
-          id?: string
-          status?: string
-          topic: string
-          updated_at?: string
-          user_id?: string | null
-        }
-        Update: {
-          anonymous_id?: string
-          created_at?: string
-          feeling?: string | null
-          id?: string
-          status?: string
-          topic?: string
-          updated_at?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      listener_sessions: {
-        Row: {
-          chat_request_id: string | null
-          ended_at: string | null
-          id: string
-          listener_id: string | null
-          started_at: string
-          status: string
-        }
-        Insert: {
-          chat_request_id?: string | null
-          ended_at?: string | null
-          id?: string
-          listener_id?: string | null
-          started_at?: string
-          status?: string
-        }
-        Update: {
-          chat_request_id?: string | null
-          ended_at?: string | null
-          id?: string
-          listener_id?: string | null
-          started_at?: string
-          status?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "listener_sessions_chat_request_id_fkey"
-            columns: ["chat_request_id"]
-            isOneToOne: false
-            referencedRelation: "chat_requests"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_profiles: {
-        Row: {
-          created_at: string
-          display_name: string | null
-          id: string
-          role: string
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          display_name?: string | null
-          id: string
-          role?: string
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          display_name?: string | null
-          id?: string
-          role?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      is_listener: {
-        Args: { user_id: string }
-        Returns: boolean
-      }
+      [_ in never]: never
     }
     Enums: {
       [_ in never]: never

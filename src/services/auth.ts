@@ -1,28 +1,16 @@
-import axios from 'axios';
-import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
-import { Preferences } from '@capacitor/preferences';
-import { Capacitor } from '@capacitor/core';
-import { jwtDecode } from 'jwt-decode';
-
-const API_BASE_URL = 'https://ventoutserver.onrender.com';
-
-const GOOGLE_WEB_CLIENT_ID = ''; // Empty for now - will be configured later
+import { supabase } from '@/integrations/supabase/client';
 
 export interface User {
   id: string;
-  _id?: string;
   role: 'listener' | 'talker';
   email: string;
   name?: string;
-  phone?: string;
   bio?: string;
   interests?: string[];
 }
 
 export interface AuthResponse {
   user: User;
-  token: string;
-  refreshToken: string;
 }
 
 export interface LoginCredentials {
@@ -39,355 +27,108 @@ export interface RegisterData {
   bio?: string;
 }
 
-export interface OTPSendData {
-  phone: string;
-}
-
-export interface OTPVerifyData {
-  phone: string;
-  code: string;
-}
-
 class AuthService {
-  private apiClient = axios.create({
-    baseURL: API_BASE_URL,
-    timeout: 10000,
-  });
+  /** Build the User shape the app expects from the current Supabase session. */
+  private async hydrateUser(): Promise<User | null> {
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (!authUser) return null;
 
-  // This promise prevents multiple refresh calls from running at once.
-  private isRefreshingPromise: Promise<string | null> | null = null;
-  private googleGisReady = false;
+    const [{ data: profile }, { data: roles }] = await Promise.all([
+      supabase.from('profiles').select('display_name, bio').eq('id', authUser.id).maybeSingle(),
+      supabase.from('user_roles').select('role').eq('user_id', authUser.id),
+    ]);
 
-  private getAuthErrorMessage(error: any, fallback: string): string {
-    const status = error?.response?.status;
-    const responseData = error?.response?.data;
+    const role: 'listener' | 'talker' =
+      roles?.some((r) => r.role === 'listener') ? 'listener' : 'talker';
 
-    if (status === 503 && typeof responseData === 'string' && responseData.includes('Service Suspended')) {
-      return 'Registration is temporarily unavailable because the authentication server is suspended. Please reactivate the backend service and try again.';
+    let interests: string[] | undefined;
+    if (role === 'listener') {
+      const { data: details } = await supabase
+        .from('listener_details')
+        .select('interests')
+        .eq('user_id', authUser.id)
+        .maybeSingle();
+      interests = details?.interests ?? [];
     }
 
-    if (status === 503) {
-      return 'The authentication server is temporarily unavailable. Please try again in a few minutes.';
-    }
-
-    if (error?.code === 'ECONNABORTED') {
-      return 'The authentication server is taking too long to respond. Please wait a minute and try again.';
-    }
-
-    if (!error?.response) {
-      return 'Unable to reach the authentication server. Please check your connection and try again.';
-    }
-
-    return responseData?.message || fallback;
-  }
-
-  constructor() {
-    this.setupInterceptors();
-    // Initialize Google Auth async to prevent blocking constructor
-    this.initializeGoogleAuth().catch(error => {
-      console.warn('Google Auth initialization failed:', error);
-      // Continue without Google Auth
-    });
-  }
-
-  private async initializeGoogleAuth() {
-    try {
-      if (!GOOGLE_WEB_CLIENT_ID) {
-        console.warn('Google Client ID not configured, skipping Google Auth initialization');
-        return;
-      }
-
-      if (Capacitor.isNativePlatform()) {
-        await GoogleAuth.initialize({
-          clientId: GOOGLE_WEB_CLIENT_ID,
-          scopes: ['profile', 'email'],
-          grantOfflineAccess: true,
-        });
-      } else {
-        await this.loadGoogleGisSDK();
-      }
-    } catch (error) {
-      console.error('Failed to initialize Google Auth:', error);
-      throw error;
-    }
-  }
-
-  private loadGoogleGisSDK(): Promise<void> {
-    return new Promise((resolve) => {
-      const script = document.createElement('script');
-      script.src = 'https://accounts.google.com/gsi/client';
-      script.onload = () => {
-        this.googleGisReady = true;
-        resolve();
-      };
-      script.onerror = () => {
-        console.error("Failed to load Google Identity Services SDK.");
-        resolve();
-      }
-      document.head.appendChild(script);
-    });
-  }
-
-  public async getToken(): Promise<string | null> {
-    // If a refresh is already in progress, all subsequent calls wait for it.
-    if (this.isRefreshingPromise) {
-      console.log('Refresh already in progress, waiting for it to resolve.');
-      try {
-        const result = await Promise.race([
-          this.isRefreshingPromise,
-          new Promise<null>((resolve) => setTimeout(() => resolve(null), 10000)),
-        ]);
-        return result;
-      } catch (e) {
-        console.error('Error while waiting for ongoing refresh:', e);
-        return null;
-      }
-    }
-
-    const accessToken = await this.getStoredToken();
-
-    if (!accessToken) {
-      return null;
-    }
-
-    let startedRefresh = false;
-    try {
-      const decodedToken: { exp: number } = jwtDecode(accessToken);
-      const currentTime = Date.now() / 1000;
-
-      if (decodedToken.exp > currentTime + 300) {
-        return accessToken;
-      }
-
-      console.log('Access token is expired or close to expiration. Attempting to refresh...');
-
-      // Start the refresh and store the promise.
-      this.isRefreshingPromise = this.refreshAccessToken();
-      startedRefresh = true;
-
-      const newToken = await Promise.race([
-        this.isRefreshingPromise,
-        new Promise<null>((resolve) => setTimeout(() => resolve(null), 10000)),
-      ]);
-      return newToken;
-    } catch (error) {
-      console.error('Invalid token found in storage or refresh failed. Logging out.');
-      this.logout();
-      return null;
-    } finally {
-      // Ensure we always clear the refreshing promise only if we initiated it
-      if (startedRefresh) {
-        this.isRefreshingPromise = null;
-      }
-    }
-  }
-
-  private async refreshAccessToken(): Promise<string | null> {
-    try {
-      const refreshToken = await this.getStoredRefreshToken();
-      if (!refreshToken) {
-        return null;
-      }
-      // Use a bare axios call to avoid interceptors and circular waits
-      const response = await axios.post(`${API_BASE_URL}/auth/refresh`, { refreshToken });
-      const { token: newAccessToken, refreshToken: newRefreshToken } = response.data;
-      await this.storeToken(newAccessToken);
-      await Preferences.set({ key: 'refresh_token', value: newRefreshToken });
-      return newAccessToken;
-    } catch (error) {
-      console.error('Failed to refresh access token:', error);
-      // Clear invalid tokens to avoid getting stuck in a bad state
-      await this.clearTokens();
-      return null;
-    }
-  }
-  
-  private setupInterceptors() {
-    this.apiClient.interceptors.request.use(
-      async (config) => {
-        const url = config.url || '';
-        // Avoid deadlock: do not attempt to attach token when calling refresh endpoint
-        if (url.includes('/auth/refresh')) {
-          return config;
-        }
-        const token = await this.getToken();
-        if (token) {
-          if (!config.headers) config.headers = {} as any;
-          (config.headers as any).Authorization = `Bearer ${token}`;
-        }
-        return config;
-      },
-      (error) => Promise.reject(error)
-    );
-  }
-
-  async googleLogin(): Promise<AuthResponse> {
-    try {
-      if (!GOOGLE_WEB_CLIENT_ID) {
-        throw new Error('Google Client ID not configured. Please contact support.');
-      }
-
-      if (Capacitor.isNativePlatform()) {
-        const googleUser = await GoogleAuth.signIn();
-        
-        if (!googleUser.authentication?.idToken) {
-          throw new Error('Failed to get Google ID token from native auth');
-        }
-        
-        const idToken = googleUser.authentication.idToken;
-
-        const response = await this.apiClient.post('/auth/google/callback', {
-          tokenId: idToken,
-        });
-        
-        const authData: AuthResponse = response.data;
-        await this.storeAuthData(authData);
-        
-        return authData;
-      } else {
-        if (!this.googleGisReady) {
-          throw new Error('Google Identity Services SDK is not loaded.');
-        }
-
-        return new Promise((resolve, reject) => {
-          const client = google.accounts.oauth2.initCodeClient({
-            client_id: GOOGLE_WEB_CLIENT_ID,
-            scope: 'openid email profile',
-            ux_mode: 'popup',
-            callback: async (response: any) => {
-              if (response.error) {
-                reject(new Error(`Google login failed: ${response.error} - ${response.error_description}`));
-                return;
-              }
-              try {
-                const apiResponse = await this.apiClient.post('/auth/google/callback', {
-                  code: response.code,
-                });
-                
-                const authData: AuthResponse = apiResponse.data;
-                await this.storeAuthData(authData);
-                resolve(authData);
-
-              } catch (error: any) {
-                reject(new Error(error.response?.data?.message || 'Google login failed'));
-              }
-            },
-          });
-          client.requestCode();
-        });
-      }
-    } catch (error: any) {
-      console.error('Google login error:', error);
-      throw new Error(error.message || 'Google login failed');
-    }
+    return {
+      id: authUser.id,
+      email: authUser.email ?? '',
+      name: profile?.display_name ?? authUser.user_metadata?.display_name ?? authUser.email?.split('@')[0],
+      bio: profile?.bio ?? undefined,
+      role,
+      interests,
+    };
   }
 
   async login(credentials: LoginCredentials): Promise<AuthResponse> {
-    try {
-      const response = await this.apiClient.post('/auth/login', credentials);
-      const authData: AuthResponse = response.data;
-      await this.storeAuthData(authData);
-      return authData;
-    } catch (error: any) {
-      throw new Error(this.getAuthErrorMessage(error, 'Login failed'));
-    }
+    const { error } = await supabase.auth.signInWithPassword({
+      email: credentials.email,
+      password: credentials.password,
+    });
+    if (error) throw new Error(error.message);
+    const user = await this.hydrateUser();
+    if (!user) throw new Error('Failed to load user after login');
+    return { user };
   }
 
   async register(data: RegisterData): Promise<AuthResponse> {
-    try {
-      const response = await this.apiClient.post('/auth/register', data);
-      const authData: AuthResponse = response.data;
-      await this.storeAuthData(authData);
-      return authData;
-    } catch (error: any) {
-      throw new Error(this.getAuthErrorMessage(error, 'Registration failed'));
+    const { error } = await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/`,
+        data: {
+          display_name: data.name,
+          role: data.role,
+        },
+      },
+    });
+    if (error) throw new Error(error.message);
+
+    // If email confirmation is enabled, there's no session yet — guide caller.
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
+      throw new Error('Account created. Please check your email to confirm before logging in.');
     }
-  }
 
-  async sendOTP(data: OTPSendData): Promise<{ success: boolean; message: string }> {
-    try {
-      const response = await this.apiClient.post('/auth/otp/send', data);
-      return response.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Failed to send OTP');
+    // Update listener-specific fields if provided
+    if (data.role === 'listener' && (data.bio || data.interests?.length)) {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser) {
+        if (data.bio) {
+          await supabase.from('profiles').update({ bio: data.bio }).eq('id', authUser.id);
+        }
+        if (data.interests?.length) {
+          await supabase
+            .from('listener_details')
+            .upsert({ user_id: authUser.id, interests: data.interests });
+        }
+      }
     }
-  }
 
-  async verifyOTP(data: OTPVerifyData): Promise<AuthResponse> {
-    try {
-      const response = await this.apiClient.post('/auth/otp/verify', data);
-      const authData: AuthResponse = response.data;
-      await this.storeAuthData(authData);
-      return authData;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'OTP verification failed');
-    }
-  }
-
-  private async storeAuthData(authData: AuthResponse): Promise<void> {
-    const userToStore = {
-      ...authData.user,
-      id: authData.user.id || authData.user._id,
-    };
-    
-    await Promise.all([
-      Preferences.set({ key: 'auth_token', value: authData.token }),
-      Preferences.set({ key: 'refresh_token', value: authData.refreshToken }),
-      Preferences.set({ key: 'user_data', value: JSON.stringify(userToStore) }),
-    ]);
-  }
-
-  private async storeToken(token: string): Promise<void> {
-    await Preferences.set({ key: 'auth_token', value: token });
-  }
-
-  async getStoredToken(): Promise<string | null> {
-    const result = await Preferences.get({ key: 'auth_token' });
-    return result.value;
-  }
-
-  private async getStoredRefreshToken(): Promise<string | null> {
-    const result = await Preferences.get({ key: 'refresh_token' });
-    return result.value;
-  }
-
-  async getStoredUser(): Promise<User | null> {
-    try {
-      const result = await Preferences.get({ key: 'user_data' });
-      return result.value ? JSON.parse(result.value) : null;
-    } catch {
-      return null;
-    }
-  }
-
-  async clearTokens(): Promise<void> {
-    await Promise.all([
-      Preferences.remove({ key: 'auth_token' }),
-      Preferences.remove({ key: 'refresh_token' }),
-      Preferences.remove({ key: 'user_data' }),
-    ]);
+    const user = await this.hydrateUser();
+    if (!user) throw new Error('Failed to load user after registration');
+    return { user };
   }
 
   async logout(): Promise<void> {
-    await this.clearTokens();
-    try {
-      if (Capacitor.isNativePlatform()) {
-        await GoogleAuth.signOut();
-      } else {
-        if (typeof google !== 'undefined' && google.accounts.id) {
-          google.accounts.id.disableAutoSelect();
-        }
-      }
-    } catch {
-      // Ignore Google signout errors
-    }
+    await supabase.auth.signOut();
+  }
+
+  async getStoredUser(): Promise<User | null> {
+    return this.hydrateUser();
   }
 
   async isAuthenticated(): Promise<boolean> {
-    const token = await this.getToken();
-    return !!token;
+    const { data } = await supabase.auth.getSession();
+    return !!data.session;
   }
 
+  async getToken(): Promise<string | null> {
+    const { data } = await supabase.auth.getSession();
+    return data.session?.access_token ?? null;
+  }
 }
 
 export const authService = new AuthService();

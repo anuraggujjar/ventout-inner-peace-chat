@@ -1,171 +1,132 @@
-
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Layout from '@/components/Layout';
 import { Button } from '@/components/ui/button';
 import { MessageCircle, Clock, Users, Heart } from 'lucide-react';
-import { useSocketContext } from '@/contexts/SocketContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const ChatRequestSentPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { toast } = useToast();
   const [dots, setDots] = useState('');
   const [connectionTime, setConnectionTime] = useState(0);
-  const { 
-    isConnected, 
-    currentRoom, 
-    partner, 
-    joinWaitingQueue, 
-    leaveWaitingQueue,
-    startLooking,
-    stopLooking, 
-  } = useSocketContext();
-  
+  const [requestId, setRequestId] = useState<string | null>(null);
+  const createdRef = useRef(false);
+
   const { topic, feeling } = location.state || {};
 
-  // Navigate to chat when match is found
+  // Create the chat request on mount (once)
   useEffect(() => {
-    if (currentRoom && partner) {
-      navigate('/chat');
-    }
-  }, [currentRoom, partner, navigate]);
+    if (!user || createdRef.current) return;
+    createdRef.current = true;
+    (async () => {
+      const { data, error } = await supabase
+        .from('chat_requests')
+        .insert({ talker_id: user.id, topic: topic ?? null, feeling: feeling ?? null })
+        .select('id')
+        .single();
+      if (error) {
+        toast({ title: 'Error', description: error.message, variant: 'destructive' });
+        navigate('/topic-selection');
+        return;
+      }
+      setRequestId(data.id);
+    })();
+  }, [user, topic, feeling, navigate, toast]);
 
-  // Start looking for a match on mount
+  // Subscribe to my request being accepted → fetch conversation → navigate
   useEffect(() => {
-    if (!isConnected || !user) return;
+    if (!requestId) return;
+    const channel = supabase
+      .channel(`chat_request:${requestId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'chat_requests', filter: `id=eq.${requestId}`,
+      }, async (payload) => {
+        const row = payload.new as { status: string };
+        if (row.status === 'accepted') {
+          const { data: convo } = await supabase
+            .from('conversations')
+            .select('id')
+            .eq('request_id', requestId)
+            .maybeSingle();
+          if (convo) navigate(`/chat?cid=${convo.id}`);
+        }
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [requestId, navigate]);
 
-    const timer = setTimeout(() => {
-      startLooking();
-      joinWaitingQueue();
-    }, 500);
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [isConnected, user]);
-
-  // Animated dots and connection timer
+  // Dots + timer
   useEffect(() => {
-    const dotsInterval = setInterval(() => {
-      setDots(prev => prev.length >= 3 ? '' : prev + '.');
-    }, 500);
-
-    const timerInterval = setInterval(() => {
-      setConnectionTime(prev => prev + 1);
-    }, 1000);
-
-    return () => {
-      clearInterval(dotsInterval);
-      clearInterval(timerInterval);
-    };
+    const d = setInterval(() => setDots(p => (p.length >= 3 ? '' : p + '.')), 500);
+    const t = setInterval(() => setConnectionTime(p => p + 1), 1000);
+    return () => { clearInterval(d); clearInterval(t); };
   }, []);
 
-  const handleCancelRequest = () => {
-    stopLooking();
-    leaveWaitingQueue();
+  const handleCancelRequest = async () => {
+    if (requestId) {
+      await supabase.from('chat_requests').update({ status: 'cancelled' }).eq('id', requestId);
+    }
     navigate('/topic-selection');
   };
 
   const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
   return (
     <Layout>
-      <div className="max-w-2xl mx-auto py-8 text-center relative overflow-hidden min-h-screen flex flex-col justify-center">
-        {/* Animated background elements */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-20 left-10 w-20 h-20 rounded-full bg-gradient-to-br from-blue-400/20 to-purple-400/20 animate-pulse"></div>
-          <div className="absolute bottom-32 right-16 w-16 h-16 rounded-full bg-gradient-to-br from-green-400/20 to-teal-400/20 animate-bounce delay-1000"></div>
-          <div className="absolute top-1/3 right-8 w-12 h-12 rounded-full bg-gradient-to-br from-pink-400/20 to-rose-400/20 animate-ping delay-2000"></div>
+      <div className="max-w-2xl mx-auto py-8 text-center min-h-screen flex flex-col justify-center">
+        <div className="flex justify-center mb-8">
+          <div className="relative">
+            <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center animate-pulse">
+              <MessageCircle size={48} className="text-green-500 animate-bounce" />
+            </div>
+            <div className="absolute -inset-4 rounded-full border-2 border-green-500/30 animate-ping"></div>
+          </div>
         </div>
 
-        {/* Main content */}
-        <div className="relative z-10">
-          {/* Success icon with animation */}
-          <div className="flex justify-center mb-8">
-            <div className="relative">
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center animate-pulse">
-                <MessageCircle size={48} className="text-green-500 animate-bounce" />
-              </div>
-              <div className="absolute -inset-4 rounded-full border-2 border-green-500/30 animate-ping"></div>
+        <h1 className="text-3xl font-bold text-primary mb-4 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+          Chat Request Sent!
+        </h1>
+        <p className="text-xl text-muted-foreground mb-8">Connecting you to a listener{dots}</p>
+
+        <div className="bg-card p-8 rounded-2xl shadow-lg mb-8 border border-border/50">
+          <div className="flex justify-center mb-6 items-center space-x-4">
+            <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center animate-pulse">
+              <Users size={16} className="text-primary" />
+            </div>
+            <div className="text-2xl">→</div>
+            <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center animate-pulse">
+              <Heart size={16} className="text-accent" />
             </div>
           </div>
-
-          <h1 className="text-3xl font-bold text-primary mb-4 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            Chat Request Sent!
-          </h1>
-          
-          <p className="text-xl text-muted-foreground mb-8">
-            Connecting you to a listener{dots}
-          </p>
-
-          {/* Connection status card */}
-          <div className="bg-card p-8 rounded-2xl shadow-lg mb-8 border border-border/50 backdrop-blur-sm">
-            <div className="flex justify-center mb-6">
-              <div className="flex items-center space-x-4">
-                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center animate-pulse">
-                  <Users size={16} className="text-primary" />
-                </div>
-                <div className="text-2xl">→</div>
-                <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center animate-pulse delay-500">
-                  <Heart size={16} className="text-accent" />
-                </div>
-              </div>
+          <h2 className="text-lg font-semibold mb-4">We're finding the perfect listener for you</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+              <span>Topic: {topic || 'General'}</span>
             </div>
-            
-            <h2 className="text-lg font-semibold mb-4">We're finding the perfect listener for you</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-muted-foreground">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                <span>Topic: {topic || 'General'}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse delay-200"></div>
-                <span>Mood: {feeling || 'Not specified'}</span>
-              </div>
-            </div>
-
-            <div className="mt-6 p-4 bg-muted/50 rounded-lg">
-              <div className="flex items-center justify-center space-x-2 text-sm">
-                <Clock size={16} className="text-muted-foreground" />
-                <span>Connection time: {formatTime(connectionTime)}</span>
-              </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+              <span>Mood: {feeling || 'Not specified'}</span>
             </div>
           </div>
-
-          {/* Reassuring message */}
-          <div className="bg-gradient-to-r from-blue-50/50 to-purple-50/50 dark:from-blue-950/30 dark:to-purple-950/30 p-6 rounded-lg mb-8">
-            <p className="text-sm text-muted-foreground">
-              We're connecting you with a real human who genuinely cares and will listen without judgment. 
-              Your conversation will be completely anonymous and confidential.
-            </p>
+          <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+            <div className="flex items-center justify-center space-x-2 text-sm">
+              <Clock size={16} className="text-muted-foreground" />
+              <span>Connection time: {formatTime(connectionTime)}</span>
+            </div>
           </div>
-
-          {/* Loading animation */}
-          <div className="flex justify-center space-x-2 mb-8">
-            {[0, 1, 2].map((i) => (
-              <div
-                key={i}
-                className="w-3 h-3 rounded-full bg-primary animate-bounce"
-                style={{ animationDelay: `${i * 0.2}s` }}
-              ></div>
-            ))}
-          </div>
-
-          <Button
-            onClick={handleCancelRequest}
-            variant="outline"
-            className="hover:scale-105 transition-transform duration-200"
-          >
-            Cancel Request
-          </Button>
         </div>
+
+        <Button onClick={handleCancelRequest} variant="outline">Cancel Request</Button>
       </div>
     </Layout>
   );

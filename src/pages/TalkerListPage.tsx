@@ -1,63 +1,113 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, MessageCircle, Clock, User } from "lucide-react";
-import { useEffect } from "react";
-import { useSocketContext } from "@/contexts/SocketContext";
+import { ArrowLeft, MessageCircle, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+interface PendingRequest {
+  id: string;
+  talker_id: string;
+  topic: string | null;
+  feeling: string | null;
+  created_at: string;
+  talker_name?: string;
+}
 
 const TalkerListPage = () => {
   const navigate = useNavigate();
-  const { availableTalkers, isConnected, requestChat } = useSocketContext();
   const { user } = useAuth();
+  const { toast } = useToast();
+  const [requests, setRequests] = useState<PendingRequest[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Get role-based home path
   const homePath = user?.role === 'listener' ? '/listener/home' : '/';
 
-  useEffect(() => {
-    // Start looking for talkers when component mounts
-    if (isConnected) {
-      // This will trigger the socket to send available talkers
-    }
-  }, [isConnected]);
+  const fetchRequests = async () => {
+    const { data, error } = await supabase
+      .from('chat_requests')
+      .select('id, talker_id, topic, feeling, created_at')
+      .eq('status', 'pending')
+      .is('listener_id', null)
+      .order('created_at', { ascending: false });
+    if (error) { console.error(error); setLoading(false); return; }
 
-  const handleConnect = (talkerId: string) => {
-    requestChat(talkerId);
+    // Enrich with talker display names
+    const ids = Array.from(new Set((data ?? []).map(r => r.talker_id)));
+    let names: Record<string, string> = {};
+    if (ids.length) {
+      const { data: profiles } = await supabase
+        .from('profiles').select('id, display_name').in('id', ids);
+      names = Object.fromEntries((profiles ?? []).map(p => [p.id, p.display_name ?? 'Anonymous']));
+    }
+    setRequests((data ?? []).map(r => ({ ...r, talker_name: names[r.talker_id] ?? 'Anonymous' })));
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchRequests();
+    const channel = supabase
+      .channel('chat_requests:pending')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_requests' },
+        () => { fetchRequests(); })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const handleAccept = async (req: PendingRequest) => {
+    if (!user) return;
+    // Atomically claim the request (only succeed if still pending & unclaimed)
+    const { data: claimed, error } = await supabase
+      .from('chat_requests')
+      .update({ listener_id: user.id, status: 'accepted' })
+      .eq('id', req.id)
+      .eq('status', 'pending')
+      .is('listener_id', null)
+      .select('id')
+      .maybeSingle();
+    if (error || !claimed) {
+      toast({ title: 'Already taken', description: 'Someone else accepted this chat first.', variant: 'destructive' });
+      fetchRequests();
+      return;
+    }
+    const { data: convo, error: cErr } = await supabase
+      .from('conversations')
+      .insert({ request_id: req.id, talker_id: req.talker_id, listener_id: user.id })
+      .select('id')
+      .single();
+    if (cErr || !convo) {
+      toast({ title: 'Error', description: cErr?.message ?? 'Could not start conversation', variant: 'destructive' });
+      return;
+    }
+    navigate(`/chat?cid=${convo.id}`);
   };
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm border-b border-border">
         <div className="flex flex-col gap-3 p-4">
+          <h1 className="text-xl font-semibold text-primary">Plaro</h1>
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-semibold text-primary">Plaro</h1>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Active Conversations</span>
+            <span className="text-sm text-muted-foreground">Pending Chat Requests</span>
             <Badge variant="outline" className="text-sm bg-primary/10 text-primary border-primary/40 font-medium">
-              {availableTalkers.length} waiting
+              {requests.length} waiting
             </Badge>
           </div>
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="p-4 pb-20">
-        {/* Back Button */}
         <div className="mb-4">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => navigate(homePath)}
-            className="text-primary hover:text-primary-foreground hover:bg-primary border-primary/40"
-          >
+          <Button variant="outline" size="icon" onClick={() => navigate(homePath)}
+            className="text-primary hover:text-primary-foreground hover:bg-primary border-primary/40">
             <ArrowLeft className="w-4 h-4" />
           </Button>
         </div>
 
-        {/* Info Banner */}
         <div className="mb-6 p-4 bg-primary/5 rounded-2xl border border-primary/20 shadow-sm">
           <h2 className="font-medium text-primary mb-2">Ready to Help?</h2>
           <p className="text-sm text-foreground/70">
@@ -65,44 +115,28 @@ const TalkerListPage = () => {
           </p>
         </div>
 
-        {/* Talkers Grid */}
         <div className="space-y-4">
-          {availableTalkers.length > 0 ? (
-            availableTalkers.map((talker) => (
-              <Card key={talker.id} className="p-6 border-border/50 hover:border-accent/50 transition-all duration-300 hover:shadow-lg animate-fade-in">
+          {loading ? (
+            <div className="text-center py-12 text-muted-foreground">Loading…</div>
+          ) : requests.length > 0 ? (
+            requests.map((req) => (
+              <Card key={req.id} className="p-6 border-border/50 hover:border-accent/50 transition-all duration-300 hover:shadow-lg animate-fade-in">
                 <div className="flex items-start gap-4">
-                  {/* Avatar */}
                   <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center flex-shrink-0">
                     <User className="w-6 h-6 text-primary" />
                   </div>
-
-                  {/* Info */}
                   <div className="flex-1 space-y-3">
                     <div className="flex items-center gap-3">
-                      <h3 className="font-semibold text-foreground">{talker.displayName}</h3>
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <div className={`w-2 h-2 rounded-full ${talker.isOnline ? 'bg-green-500' : 'bg-gray-400'}`}></div>
-                        {talker.isOnline ? 'Online' : 'Offline'}
-                      </div>
+                      <h3 className="font-semibold text-foreground">{req.talker_name}</h3>
                     </div>
-
                     <p className="text-sm text-muted-foreground leading-relaxed">
-                      Looking for someone to talk to...
+                      Wants to talk about <span className="font-medium text-foreground">{req.topic || 'general'}</span>
+                      {req.feeling ? <> — feeling <span className="font-medium text-foreground">{req.feeling}</span></> : null}
                     </p>
-
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <User className="w-3 h-3" />
-                        {talker.role}
-                      </div>
-                      
-                      <Button
-                        onClick={() => handleConnect(talker.id)}
-                        className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl transition-colors duration-200"
-                        size="sm"
-                      >
+                    <div className="flex items-center justify-end">
+                      <Button onClick={() => handleAccept(req)} className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl" size="sm">
                         <MessageCircle className="w-4 h-4 mr-2" />
-                        Connect
+                        Accept
                       </Button>
                     </div>
                   </div>
@@ -115,16 +149,7 @@ const TalkerListPage = () => {
                 <MessageCircle className="w-8 h-8 text-muted-foreground" />
               </div>
               <h3 className="font-semibold text-foreground mb-2">No one needs help right now</h3>
-              <p className="text-muted-foreground text-sm mb-4">
-                Check back later or try refreshing the page.
-              </p>
-              <Button 
-                variant="outline" 
-                onClick={() => window.location.reload()}
-                className="text-muted-foreground hover:text-foreground hover:bg-muted/50 border-border/50"
-              >
-                Refresh
-              </Button>
+              <p className="text-muted-foreground text-sm">New requests will appear here automatically.</p>
             </div>
           )}
         </div>

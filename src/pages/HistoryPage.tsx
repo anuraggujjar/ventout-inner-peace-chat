@@ -1,21 +1,21 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Layout from '@/components/Layout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MessageCircle, Clock, User, Trash2, ArrowLeft, Loader2 } from 'lucide-react';
+import { MessageCircle, Clock, User, ArrowLeft, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ChatSession {
   id: string;
   topic: string;
   feeling: string;
   startTime: Date;
-  duration: number;
-  listenerName: string;
+  endedAt?: Date | null;
+  partnerName: string;
   messageCount: number;
 }
 
@@ -23,223 +23,130 @@ const HistoryPage = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
-
-  const [chatHistory, setChatHistory] = useState<ChatSession[]>([]);
+  const [history, setHistory] = useState<ChatSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const API_BASE_URL = 'https://ventoutserver.onrender.com';
 
   useEffect(() => {
-    const fetchChatHistory = async () => {
-      if (!user?.id) {
+    if (!user) { setIsLoading(false); return; }
+    (async () => {
+      const { data: convos, error } = await supabase
+        .from('conversations')
+        .select('id, talker_id, listener_id, started_at, ended_at, request_id, chat_requests(topic, feeling)')
+        .or(`talker_id.eq.${user.id},listener_id.eq.${user.id}`)
+        .order('started_at', { ascending: false });
+      if (error) {
+        toast({ title: 'Error', description: 'Could not load history.', variant: 'destructive' });
         setIsLoading(false);
         return;
       }
 
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/users/${user.id}/conversations`);
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch chat history');
-        }
+      const partnerIds = (convos ?? []).map(c => c.talker_id === user.id ? c.listener_id : c.talker_id);
+      const uniq = Array.from(new Set(partnerIds));
+      const { data: profiles } = uniq.length
+        ? await supabase.from('profiles').select('id, display_name').in('id', uniq)
+        : { data: [] as { id: string; display_name: string | null }[] };
+      const nameMap = Object.fromEntries((profiles ?? []).map(p => [p.id, p.display_name ?? 'Anonymous']));
 
-        const conversations = await response.json();
-        
-        // Map API response to ChatSession format
-        const mappedHistory: ChatSession[] = conversations.map((conv: any) => ({
-          id: conv._id || conv.id,
-          topic: conv.topic || 'general',
-          feeling: conv.feeling || 'ok',
-          startTime: new Date(conv.createdAt),
-          duration: conv.duration || 0,
-          listenerName: conv.listenerName || 'Anonymous',
-          messageCount: conv.messageCount || 0
-        }));
-
-        setChatHistory(mappedHistory);
-      } catch (error) {
-        console.error('Error fetching chat history:', error);
-        toast({
-          title: "Error",
-          description: "Could not load chat history. Please try again later.",
-          variant: "destructive"
-        });
-      } finally {
-        setIsLoading(false);
+      // Message counts
+      const ids = (convos ?? []).map(c => c.id);
+      const counts: Record<string, number> = {};
+      if (ids.length) {
+        const { data: msgRows } = await supabase
+          .from('messages').select('conversation_id').in('conversation_id', ids);
+        (msgRows ?? []).forEach(m => { counts[m.conversation_id] = (counts[m.conversation_id] ?? 0) + 1; });
       }
-    };
 
-    fetchChatHistory();
+      setHistory((convos ?? []).map(c => {
+        const partner = c.talker_id === user.id ? c.listener_id : c.talker_id;
+        const cr = (c as any).chat_requests;
+        return {
+          id: c.id,
+          topic: cr?.topic ?? 'general',
+          feeling: cr?.feeling ?? 'ok',
+          startTime: new Date(c.started_at),
+          endedAt: c.ended_at ? new Date(c.ended_at) : null,
+          partnerName: nameMap[partner] ?? 'Anonymous',
+          messageCount: counts[c.id] ?? 0,
+        };
+      }));
+      setIsLoading(false);
+    })();
   }, [user, toast]);
 
+  const topicLabel = (t: string) => ({
+    general: 'General Chat', relationships: 'Relationships', 'work-stress': 'Work Stress',
+    family: 'Family Issues', 'married-life': 'Married Life', lgbtq: 'LGBTQ Identity',
+    loneliness: 'Loneliness & Depression',
+  } as Record<string, string>)[t] || t;
 
-  const getTopicLabel = (topic: string) => {
-    const topicMap: { [key: string]: string } = {
-      'general': 'General Chat',
-      'relationships': 'Relationships',
-      'work-stress': 'Work Stress',
-      'family': 'Family Issues',
-      'married-life': 'Married Life',
-      'lgbtq': 'LGBTQ Identity',
-      'loneliness': 'Loneliness & Depression'
-    };
-    return topicMap[topic] || topic;
-  };
-
-  const getFeelingEmoji = (feeling: string) => {
-    const feelingMap: { [key: string]: string } = {
-      'ok': '😊',
-      'not-ok': '😔',
-      'dont-know': '🤷‍♀️'
-    };
-    return feelingMap[feeling] || '😐';
-  };
-
-  const formatDuration = (minutes: number) => {
-    const hours = Math.floor(minutes / 60);
-    const mins = minutes % 60;
-    if (hours > 0) {
-      return `${hours}h ${mins}m`;
-    }
-    return `${mins}m`;
-  };
+  const feelingEmoji = (f: string) => ({ ok: '😊', 'not-ok': '😔', 'dont-know': '🤷‍♀️' } as Record<string, string>)[f] || '😐';
 
   const formatDate = (date: Date) => {
-    const now = new Date();
-    const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
-    
-    if (diffInDays === 0) return 'Today';
-    if (diffInDays === 1) return 'Yesterday';
-    if (diffInDays < 7) return `${diffInDays} days ago`;
+    const diffDays = Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
     return date.toLocaleDateString();
   };
 
-  const handleDeleteSession = async (sessionId: string) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/conversations/${sessionId}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete session');
-      }
-
-      setChatHistory(prev => prev.filter(session => session.id !== sessionId));
-      
-      toast({
-        title: "Session Deleted",
-        description: "Chat session has been removed from your history.",
-      });
-    } catch (error) {
-      console.error('Error deleting session:', error);
-      toast({
-        title: "Error",
-        description: "Could not delete session. Please try again.",
-        variant: "destructive"
-      });
-    }
+  const formatDuration = (start: Date, end?: Date | null) => {
+    if (!end) return 'In progress';
+    const mins = Math.max(1, Math.round((end.getTime() - start.getTime()) / 60000));
+    const h = Math.floor(mins / 60), m = mins % 60;
+    return h > 0 ? `${h}h ${m}m` : `${m}m`;
   };
 
   return (
     <Layout>
       <div className="max-w-4xl mx-auto py-6 space-y-6">
         <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate('/')}
-            aria-label="Go back"
-          >
+          <Button variant="ghost" size="icon" onClick={() => navigate(user?.role === 'listener' ? '/listener/home' : '/')} aria-label="Go back">
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
             <h1 className="text-3xl font-bold text-foreground mb-2">Chat History</h1>
-            <p className="text-muted-foreground">Your previous conversations with listeners</p>
+            <p className="text-muted-foreground">Your previous conversations</p>
           </div>
         </div>
 
-        {/* History List */}
         {isLoading ? (
-          <Card>
-            <CardContent className="text-center py-12">
-              <Loader2 className="h-12 w-12 text-primary mx-auto mb-4 animate-spin" />
-              <h3 className="text-lg font-semibold mb-2">Loading your chat history...</h3>
-              <p className="text-muted-foreground">Please wait a moment</p>
-            </CardContent>
-          </Card>
-        ) : chatHistory.length === 0 ? (
-          <Card>
-            <CardContent className="text-center py-12">
-              <MessageCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No chat history found</h3>
-              <p className="text-muted-foreground mb-4">
-                Start your first conversation to see it here.
-              </p>
-              <Button onClick={() => window.location.href = '/topic-selection'}>
-                Start New Chat
-              </Button>
-            </CardContent>
-          </Card>
+          <Card><CardContent className="text-center py-12">
+            <Loader2 className="h-12 w-12 text-primary mx-auto mb-4 animate-spin" />
+            <h3 className="text-lg font-semibold">Loading your chat history…</h3>
+          </CardContent></Card>
+        ) : history.length === 0 ? (
+          <Card><CardContent className="text-center py-12">
+            <MessageCircle className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No chat history yet</h3>
+            <p className="text-muted-foreground mb-4">Start your first conversation to see it here.</p>
+            <Button onClick={() => navigate('/topic-selection')}>Start New Chat</Button>
+          </CardContent></Card>
         ) : (
           <div className="space-y-4">
-            {chatHistory.map((session) => (
-              <Card key={session.id} className="hover:shadow-md transition-shadow">
+            {history.map((s) => (
+              <Card key={s.id} className="hover:shadow-md transition-shadow">
                 <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <CardTitle className="text-lg flex items-center space-x-2">
-                        <span>{getTopicLabel(session.topic)}</span>
-                        <span className="text-xl">{getFeelingEmoji(session.feeling)}</span>
-                      </CardTitle>
-                      <CardDescription className="flex items-center space-x-4">
-                        <span className="flex items-center space-x-1">
-                          <Clock className="h-3 w-3" />
-                          <span>{formatDate(session.startTime)}</span>
-                        </span>
-                        <span className="flex items-center space-x-1">
-                          <User className="h-3 w-3" />
-                          <span>with {session.listenerName}</span>
-                        </span>
-                      </CardDescription>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDeleteSession(session.id)}
-                      className="text-muted-foreground hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <CardTitle className="text-lg flex items-center space-x-2">
+                    <span>{topicLabel(s.topic)}</span>
+                    <span className="text-xl">{feelingEmoji(s.feeling)}</span>
+                  </CardTitle>
+                  <CardDescription className="flex items-center space-x-4">
+                    <span className="flex items-center space-x-1"><Clock className="h-3 w-3" /><span>{formatDate(s.startTime)}</span></span>
+                    <span className="flex items-center space-x-1"><User className="h-3 w-3" /><span>with {s.partnerName}</span></span>
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
-                      <Badge variant="secondary">
-                        {formatDuration(session.duration)}
-                      </Badge>
-                      <Badge variant="outline">
-                        {session.messageCount} messages
-                      </Badge>
+                      <Badge variant="secondary">{formatDuration(s.startTime, s.endedAt)}</Badge>
+                      <Badge variant="outline">{s.messageCount} messages</Badge>
                     </div>
-                    <Button variant="outline" size="sm">
-                      View Details
-                    </Button>
                   </div>
                 </CardContent>
               </Card>
             ))}
           </div>
         )}
-
-        {/* Privacy Notice */}
-        <Card className="bg-muted/30">
-          <CardContent className="pt-6">
-            <p className="text-sm text-muted-foreground text-center">
-              Your chat history is stored locally on your device for privacy. 
-              Data is automatically deleted after 30 days unless manually cleared.
-            </p>
-          </CardContent>
-        </Card>
       </div>
     </Layout>
   );

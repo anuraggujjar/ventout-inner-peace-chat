@@ -38,26 +38,60 @@ const ChatRequestSentPage = () => {
     })();
   }, [user, topic, feeling, navigate, toast]);
 
-  // Subscribe to my request being accepted → fetch conversation → navigate
+  // Subscribe to my request being accepted → fetch conversation → navigate.
+  // We listen on TWO signals so a missed/late event can't strand the talker:
+  //   1) chat_requests UPDATE with status='accepted'
+  //   2) conversations INSERT with request_id=<ours>
+  // Plus a one-shot check on mount in case the accept happened first.
   useEffect(() => {
     if (!requestId) return;
-    const channel = supabase
+    let cancelled = false;
+
+    const goToConversation = async () => {
+      if (cancelled) return;
+      const { data: convo } = await supabase
+        .from('conversations')
+        .select('id')
+        .eq('request_id', requestId)
+        .maybeSingle();
+      if (convo && !cancelled) navigate(`/chat?cid=${convo.id}`);
+    };
+
+    // One-shot: was it already accepted before we subscribed?
+    (async () => {
+      const { data: req } = await supabase
+        .from('chat_requests')
+        .select('status')
+        .eq('id', requestId)
+        .maybeSingle();
+      if (req?.status === 'accepted') await goToConversation();
+    })();
+
+    const reqChannel = supabase
       .channel(`chat_request:${requestId}`)
       .on('postgres_changes', {
         event: 'UPDATE', schema: 'public', table: 'chat_requests', filter: `id=eq.${requestId}`,
       }, async (payload) => {
         const row = payload.new as { status: string };
-        if (row.status === 'accepted') {
-          const { data: convo } = await supabase
-            .from('conversations')
-            .select('id')
-            .eq('request_id', requestId)
-            .maybeSingle();
-          if (convo) navigate(`/chat?cid=${convo.id}`);
-        }
+        if (row.status === 'accepted') await goToConversation();
       })
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+
+    const convoChannel = supabase
+      .channel(`conversation_for:${requestId}`)
+      .on('postgres_changes', {
+        event: 'INSERT', schema: 'public', table: 'conversations', filter: `request_id=eq.${requestId}`,
+      }, (payload) => {
+        const row = payload.new as { id: string };
+        if (row?.id && !cancelled) navigate(`/chat?cid=${row.id}`);
+      })
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(reqChannel);
+      supabase.removeChannel(convoChannel);
+    };
   }, [requestId, navigate]);
 
   // Dots + timer

@@ -101,13 +101,15 @@ const HealingAnimation = () => {
 const Index = () => {
   const [currentQuote, setCurrentQuote] = useState(initialQuotes[0]);
   const navigate = useNavigate();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      navigate('/auth');
-    }
-  }, [isAuthenticated, isLoading, navigate]);
+    if (isLoading) return;
+    if (!isAuthenticated) { navigate('/auth'); return; }
+    // Listeners must never land on the talker home — it lacks "Be a Listener"
+    // and looks like their role was lost. Bounce them to their own home.
+    if (user?.role === 'listener') navigate('/listener/home', { replace: true });
+  }, [isAuthenticated, isLoading, user, navigate]);
 
   if (isLoading) {
     return (

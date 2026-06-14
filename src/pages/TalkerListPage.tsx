@@ -60,10 +60,11 @@ const TalkerListPage = () => {
 
   const handleAccept = async (req: PendingRequest) => {
     if (!user) return;
-    // Atomically claim the request (only succeed if still pending & unclaimed)
+    // Step 1: atomically CLAIM the request (set listener_id) but keep status='pending'
+    // so the talker's realtime UPDATE handler doesn't fire before the conversation exists.
     const { data: claimed, error } = await supabase
       .from('chat_requests')
-      .update({ listener_id: user.id, status: 'accepted' })
+      .update({ listener_id: user.id })
       .eq('id', req.id)
       .eq('status', 'pending')
       .is('listener_id', null)
@@ -74,13 +75,25 @@ const TalkerListPage = () => {
       fetchRequests();
       return;
     }
+    // Step 2: create the conversation row first.
     const { data: convo, error: cErr } = await supabase
       .from('conversations')
       .insert({ request_id: req.id, talker_id: req.talker_id, listener_id: user.id })
       .select('id')
       .single();
     if (cErr || !convo) {
+      // Rollback claim so another listener can pick it up.
+      await supabase.from('chat_requests').update({ listener_id: null }).eq('id', req.id);
       toast({ title: 'Error', description: cErr?.message ?? 'Could not start conversation', variant: 'destructive' });
+      return;
+    }
+    // Step 3: NOW flip status to 'accepted' — this is the signal the talker subscribes to.
+    const { error: aErr } = await supabase
+      .from('chat_requests')
+      .update({ status: 'accepted' })
+      .eq('id', req.id);
+    if (aErr) {
+      toast({ title: 'Error', description: aErr.message, variant: 'destructive' });
       return;
     }
     navigate(`/chat?cid=${convo.id}`);

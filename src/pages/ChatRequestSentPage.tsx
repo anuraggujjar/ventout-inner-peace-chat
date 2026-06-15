@@ -38,14 +38,20 @@ const ChatRequestSentPage = () => {
     })();
   }, [user, topic, feeling, navigate, toast]);
 
-  // Subscribe to my request being accepted → fetch conversation → navigate.
+  // Subscribe to my request being accepted → navigate to the accepted chat room.
   useEffect(() => {
     if (!requestId) return;
     let cancelled = false;
     let redirected = false;
 
-    const goToConversation = async () => {
+    const goToConversation = async (conversationId?: string | null) => {
       if (cancelled || redirected) return;
+      if (conversationId) {
+        redirected = true;
+        navigate(`/chat?cid=${conversationId}`);
+        return;
+      }
+
       const { data: convo } = await supabase
         .from('conversations')
         .select('id')
@@ -62,21 +68,32 @@ const ChatRequestSentPage = () => {
       .on('postgres_changes', {
         event: 'UPDATE', schema: 'public', table: 'chat_requests', filter: `id=eq.${requestId}`,
       }, async (payload) => {
-        const row = payload.new as { status: string };
-        if (row.status === 'accepted') await goToConversation();
+        const row = payload.new as { status: string; conversation_id: string | null };
+        if (row.status === 'accepted') await goToConversation(row.conversation_id);
       })
       .subscribe(async (status) => {
         if (status !== 'SUBSCRIBED') return;
         const { data: req } = await supabase
           .from('chat_requests')
-          .select('status')
+          .select('status, conversation_id')
           .eq('id', requestId)
           .maybeSingle();
-        if (req?.status === 'accepted') await goToConversation();
-      })
+        if (req?.status === 'accepted') await goToConversation(req.conversation_id);
+      });
+
+    const poll = window.setInterval(async () => {
+      if (cancelled || redirected) return;
+      const { data: req } = await supabase
+        .from('chat_requests')
+        .select('status, conversation_id')
+        .eq('id', requestId)
+        .maybeSingle();
+      if (req?.status === 'accepted') await goToConversation(req.conversation_id);
+    }, 1200);
 
     return () => {
       cancelled = true;
+      window.clearInterval(poll);
       supabase.removeChannel(reqChannel);
     };
   }, [requestId, navigate]);

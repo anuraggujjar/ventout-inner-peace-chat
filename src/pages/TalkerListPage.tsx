@@ -87,10 +87,10 @@ const TalkerListPage = () => {
       toast({ title: 'Error', description: cErr?.message ?? 'Could not start conversation', variant: 'destructive' });
       return;
     }
-    // Step 3: NOW flip status to 'accepted' — this is the signal the talker subscribes to.
+    // Step 3: NOW attach the chat room id and flip status to 'accepted' — this is the signal the talker subscribes to.
     const { error: aErr } = await supabase
       .from('chat_requests')
-      .update({ status: 'accepted' })
+      .update({ status: 'accepted', conversation_id: convo.id })
       .eq('id', req.id);
     if (aErr) {
       toast({ title: 'Error', description: aErr.message, variant: 'destructive' });

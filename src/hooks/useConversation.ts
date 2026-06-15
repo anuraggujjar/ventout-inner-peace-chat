@@ -27,6 +27,10 @@ const toMessage = (row: DbMessage, currentUserId: string, audioUrl?: string): Me
   status: 'sent',
 });
 
+const messageTime = (message: Message) => (
+  message.createdAt ?? message.timestamp ?? new Date(0)
+).getTime();
+
 /**
  * Subscribes to a single conversation's messages via Postgres Realtime
  * and exposes helpers for sending text/voice messages.
@@ -49,7 +53,7 @@ export function useConversation(conversationId: string | null) {
     setMessages((prev) => {
       if (prev.some((m) => m.id === nextMessage.id)) return prev;
       return [...prev, nextMessage].sort(
-        (a, b) => (a.createdAt ?? a.timestamp).getTime() - (b.createdAt ?? b.timestamp).getTime()
+        (a, b) => messageTime(a) - messageTime(b)
       );
     });
   }, [resolveAudio]);
@@ -91,7 +95,7 @@ export function useConversation(conversationId: string | null) {
           const byId = new Map<string, Message>();
           [...mapped, ...prev].forEach((item) => byId.set(item.id, item));
           return Array.from(byId.values()).sort(
-            (a, b) => (a.createdAt ?? a.timestamp).getTime() - (b.createdAt ?? b.timestamp).getTime()
+            (a, b) => messageTime(a) - messageTime(b)
           );
         });
         setLoading(false);

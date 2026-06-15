@@ -20,6 +20,26 @@ const ListenerHomePage = () => {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @keyframes listenerFloat {
+            0%, 100% { transform: translateY(0px) translateX(0px) scale(1); opacity: 0.62; }
+            35% { transform: translateY(-14px) translateX(5px) scale(1.06); opacity: 0.86; }
+            70% { transform: translateY(-6px) translateX(-4px) scale(0.98); opacity: 0.72; }
+          }
+
+          @keyframes listenerPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 hsl(var(--primary) / 0.22); }
+            50% { transform: scale(1.08); box-shadow: 0 0 24px 6px hsl(var(--primary) / 0.16); }
+          }
+
+          @keyframes listenerWave {
+            0% { transform: translateX(-55%); opacity: 0; }
+            20%, 80% { opacity: 0.5; }
+            100% { transform: translateX(55%); opacity: 0; }
+          }
+        `
+      }} />
       {/* Header */}
       <header className="relative z-10 flex items-center justify-between p-6">
         <h1 className="text-2xl font-bold text-primary">Plaro</h1>
@@ -43,6 +63,15 @@ const ListenerHomePage = () => {
       <main className="relative z-10 flex flex-col items-center px-6 pt-8 pb-24">
         {/* Logo Section */}
         <div className="text-center mb-8">
+          <div className="relative mx-auto mb-6 h-32 w-40 overflow-hidden" aria-hidden="true">
+            <div className="absolute left-1/2 top-1/2 h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/30" style={{ animation: 'listenerPulse 4s ease-in-out infinite' }} />
+            <div className="absolute left-5 top-4 h-4 w-4 rounded-full bg-secondary" style={{ animation: 'listenerFloat 6s ease-in-out infinite' }} />
+            <div className="absolute right-7 top-8 h-3 w-3 rounded-full bg-accent" style={{ animation: 'listenerFloat 5s ease-in-out infinite 0.8s' }} />
+            <div className="absolute bottom-5 left-8 h-3.5 w-3.5 rounded-full bg-muted-foreground/25" style={{ animation: 'listenerFloat 7s ease-in-out infinite 1.4s' }} />
+            <div className="absolute bottom-9 right-5 h-5 w-5 rounded-full bg-primary/20" style={{ animation: 'listenerFloat 5.5s ease-in-out infinite 2s' }} />
+            <div className="absolute bottom-1 left-0 h-px w-full bg-primary/30" style={{ animation: 'listenerWave 7s linear infinite' }} />
+            <div className="absolute bottom-4 left-0 h-px w-full bg-secondary" style={{ animation: 'listenerWave 9s linear infinite 1.5s' }} />
+          </div>
           <h2 className="text-5xl font-bold text-primary mb-4">Plaro</h2>
           <p className="text-xl text-muted-foreground">Your safe space to be heard.</p>
         </div>

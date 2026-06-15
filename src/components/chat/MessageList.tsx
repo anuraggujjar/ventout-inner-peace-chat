@@ -26,7 +26,6 @@ const MessageList = ({ messages, userRole, partnerTyping, messagesEndRef, user }
   const formatTime = (dateString: string | Date | undefined) => {
     // Check if the date string exists
     if (!dateString) {
-      console.log('Formatting date: undefined');
       return '...'; // Return a placeholder to prevent the crash
     }
 

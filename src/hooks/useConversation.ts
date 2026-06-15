@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/app-client';
 import { Message } from '@/types/message';
 
 interface DbMessage {
@@ -27,6 +27,10 @@ const toMessage = (row: DbMessage, currentUserId: string, audioUrl?: string): Me
   status: 'sent',
 });
 
+const messageTime = (message: Message) => (
+  message.createdAt ?? message.timestamp ?? new Date(0)
+).getTime();
+
 /**
  * Subscribes to a single conversation's messages via Postgres Realtime
  * and exposes helpers for sending text/voice messages.
@@ -42,13 +46,29 @@ export function useConversation(conversationId: string | null) {
     return data?.signedUrl;
   }, []);
 
+  const addMessageRow = useCallback(async (row: DbMessage, userId: string) => {
+    const audioUrl = row.audio_path ? await resolveAudio(row.audio_path) : undefined;
+    const nextMessage = toMessage(row, userId, audioUrl);
+
+    setMessages((prev) => {
+      if (prev.some((m) => m.id === nextMessage.id)) return prev;
+      return [...prev, nextMessage].sort(
+        (a, b) => messageTime(a) - messageTime(b)
+      );
+    });
+  }, [resolveAudio]);
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
+    setMessages([]);
 
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user || cancelled) return;
+      if (!user || cancelled) {
+        if (!cancelled) setLoading(false);
+        return;
+      }
       setCurrentUserId(user.id);
 
       if (!conversationId) {
@@ -71,7 +91,13 @@ export function useConversation(conversationId: string | null) {
         mapped.push(toMessage(row as DbMessage, user.id, audioUrl));
       }
       if (!cancelled) {
-        setMessages(mapped);
+        setMessages((prev) => {
+          const byId = new Map<string, Message>();
+          [...mapped, ...prev].forEach((item) => byId.set(item.id, item));
+          return Array.from(byId.values()).sort(
+            (a, b) => messageTime(a) - messageTime(b)
+          );
+        });
         setLoading(false);
       }
     })();
@@ -87,11 +113,7 @@ export function useConversation(conversationId: string | null) {
           const row = payload.new as DbMessage;
           const { data: { user } } = await supabase.auth.getUser();
           if (!user) return;
-          const audioUrl = row.audio_path ? await resolveAudio(row.audio_path) : undefined;
-          setMessages((prev) => {
-            if (prev.some((m) => m.id === row.id)) return prev;
-            return [...prev, toMessage(row, user.id, audioUrl)];
-          });
+          await addMessageRow(row, user.id);
         }
       )
       .subscribe();
@@ -100,18 +122,19 @@ export function useConversation(conversationId: string | null) {
       cancelled = true;
       supabase.removeChannel(channel);
     };
-  }, [conversationId, resolveAudio]);
+  }, [conversationId, resolveAudio, addMessageRow]);
 
   const sendText = useCallback(async (text: string) => {
     if (!conversationId || !currentUserId || !text.trim()) return;
-    const { error } = await supabase.from('messages').insert({
+    const { data, error } = await supabase.from('messages').insert({
       conversation_id: conversationId,
       sender_id: currentUserId,
       type: 'text',
       content: text.trim(),
-    });
+    }).select('*').single();
     if (error) throw new Error(error.message);
-  }, [conversationId, currentUserId]);
+    if (data) await addMessageRow(data as DbMessage, currentUserId);
+  }, [conversationId, currentUserId, addMessageRow]);
 
   const sendVoice = useCallback(async (blob: Blob, durationSeconds: number) => {
     if (!conversationId || !currentUserId) return;
@@ -122,15 +145,16 @@ export function useConversation(conversationId: string | null) {
       .upload(path, blob, { contentType: blob.type || 'audio/webm' });
     if (upErr) throw new Error(upErr.message);
 
-    const { error } = await supabase.from('messages').insert({
+    const { data, error } = await supabase.from('messages').insert({
       conversation_id: conversationId,
       sender_id: currentUserId,
       type: 'voice',
       audio_path: path,
       duration_seconds: Math.round(durationSeconds),
-    });
+    }).select('*').single();
     if (error) throw new Error(error.message);
-  }, [conversationId, currentUserId]);
+    if (data) await addMessageRow(data as DbMessage, currentUserId);
+  }, [conversationId, currentUserId, addMessageRow]);
 
   return { messages, loading, sendText, sendVoice, currentUserId };
 }

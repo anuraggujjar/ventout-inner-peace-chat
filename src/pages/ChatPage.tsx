@@ -8,7 +8,7 @@ import MessageInput from '@/components/chat/MessageInput';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useConversation } from '@/hooks/useConversation';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/app-client';
 import { sanitizeInput } from '@/utils/privacy';
 import { Card } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';

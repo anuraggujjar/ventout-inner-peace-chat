@@ -19,7 +19,7 @@ const ListenerHomePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background relative">
+    <div className="min-h-screen bg-background relative flex flex-col">
       <style dangerouslySetInnerHTML={{
         __html: `
           @keyframes treeSway {

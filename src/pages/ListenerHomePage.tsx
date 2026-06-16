@@ -19,7 +19,7 @@ const ListenerHomePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
+    <div className="min-h-screen bg-background relative flex flex-col">
       <style dangerouslySetInnerHTML={{
         __html: `
           @keyframes treeSway {
@@ -67,10 +67,10 @@ const ListenerHomePage = () => {
       </header>
 
       {/* Main Content */}
-      <main className="relative z-10 flex flex-col items-center px-6 pt-8 pb-40">
+      <main className="relative z-10 flex flex-col items-center px-6 pt-4 pb-8 flex-1 overflow-y-auto">
         {/* Logo Section */}
-        <div className="text-center mb-8">
-          <div className="relative mx-auto mb-6 h-32 w-40 overflow-hidden" aria-hidden="true">
+        <div className="text-center mb-6">
+          <div className="relative mx-auto mb-4 h-28 w-36 overflow-hidden" aria-hidden="true">
             {/* Bird flying across */}
             <svg
               viewBox="0 0 24 12"
@@ -102,12 +102,12 @@ const ListenerHomePage = () => {
               <line x1="20" y1="79" x2="80" y2="79" className="stroke-primary/40" strokeWidth="0.6" strokeLinecap="round" style={{ animation: 'groundGlow 5s ease-in-out infinite' }} />
             </svg>
           </div>
-          <h2 className="text-5xl font-bold text-primary mb-4">Plaro</h2>
-          <p className="text-xl text-muted-foreground">Your safe space to be heard.</p>
+          <h2 className="text-4xl font-bold text-primary mb-2">Plaro</h2>
+          <p className="text-lg text-muted-foreground">Your safe space to be heard.</p>
         </div>
 
         {/* Quote Card */}
-        <div className="w-full max-w-md mb-12">
+        <div className="w-full max-w-md mb-8">
           <QuoteCard 
             quote="Every person you meet is fighting a battle you know nothing about. Be kind. Always."
             author="Anonymous"
@@ -142,6 +142,9 @@ const ListenerHomePage = () => {
             </Button>
           </div>
         </div>
+
+        {/* Spacer to push content above fixed bottom nav */}
+        <div className="h-28 w-full shrink-0" />
       </main>
 
       {/* Bottom Navigation */}

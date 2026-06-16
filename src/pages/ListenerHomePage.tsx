@@ -69,8 +69,8 @@ const ListenerHomePage = () => {
       {/* Main Content */}
       <main className="relative z-10 flex flex-col items-center px-6 pt-6 pb-32 overflow-y-auto" style={{ minHeight: 'calc(100vh - 80px)' }}>
         {/* Logo Section */}
-        <div className="text-center mb-8">
-          <div className="relative mx-auto mb-6 h-32 w-40 overflow-hidden" aria-hidden="true">
+        <div className="text-center mb-6">
+          <div className="relative mx-auto mb-4 h-28 w-36 overflow-hidden" aria-hidden="true">
             {/* Bird flying across */}
             <svg
               viewBox="0 0 24 12"
@@ -102,8 +102,8 @@ const ListenerHomePage = () => {
               <line x1="20" y1="79" x2="80" y2="79" className="stroke-primary/40" strokeWidth="0.6" strokeLinecap="round" style={{ animation: 'groundGlow 5s ease-in-out infinite' }} />
             </svg>
           </div>
-          <h2 className="text-5xl font-bold text-primary mb-4">Plaro</h2>
-          <p className="text-xl text-muted-foreground">Your safe space to be heard.</p>
+          <h2 className="text-4xl font-bold text-primary mb-2">Plaro</h2>
+          <p className="text-lg text-muted-foreground">Your safe space to be heard.</p>
         </div>
 
         {/* Quote Card */}

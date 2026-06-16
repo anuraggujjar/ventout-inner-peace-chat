@@ -144,7 +144,7 @@ const ListenerHomePage = () => {
         </div>
 
         {/* Spacer to push content above fixed bottom nav */}
-        <div className="h-20 w-full shrink-0" />
+        <div className="h-28 w-full shrink-0" />
       </main>
 
       {/* Bottom Navigation */}

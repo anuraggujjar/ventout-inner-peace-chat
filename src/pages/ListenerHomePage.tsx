@@ -107,7 +107,7 @@ const ListenerHomePage = () => {
         </div>
 
         {/* Quote Card */}
-        <div className="w-full max-w-md mb-12">
+        <div className="w-full max-w-md mb-8">
           <QuoteCard 
             quote="Every person you meet is fighting a battle you know nothing about. Be kind. Always."
             author="Anonymous"

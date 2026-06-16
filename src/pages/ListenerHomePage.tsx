@@ -67,7 +67,7 @@ const ListenerHomePage = () => {
       </header>
 
       {/* Main Content */}
-      <main className="relative z-10 flex flex-col items-center px-6 pt-8 pb-24">
+      <main className="relative z-10 flex flex-col items-center px-6 pt-8 pb-40">
         {/* Logo Section */}
         <div className="text-center mb-8">
           <div className="relative mx-auto mb-6 h-32 w-40 overflow-hidden" aria-hidden="true">

@@ -22,21 +22,28 @@ const ListenerHomePage = () => {
     <div className="min-h-screen bg-background relative overflow-hidden">
       <style dangerouslySetInnerHTML={{
         __html: `
-          @keyframes listenerFloat {
-            0%, 100% { transform: translateY(0px) translateX(0px) scale(1); opacity: 0.62; }
-            35% { transform: translateY(-14px) translateX(5px) scale(1.06); opacity: 0.86; }
-            70% { transform: translateY(-6px) translateX(-4px) scale(0.98); opacity: 0.72; }
+          @keyframes treeSway {
+            0%, 100% { transform: rotate(-1.5deg); }
+            50% { transform: rotate(1.5deg); }
           }
-
-          @keyframes listenerPulse {
-            0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 hsl(var(--primary) / 0.22); }
-            50% { transform: scale(1.08); box-shadow: 0 0 24px 6px hsl(var(--primary) / 0.16); }
+          @keyframes leafBreath {
+            0%, 100% { transform: scale(1); opacity: 0.85; }
+            50% { transform: scale(1.05); opacity: 1; }
           }
-
-          @keyframes listenerWave {
-            0% { transform: translateX(-55%); opacity: 0; }
-            20%, 80% { opacity: 0.5; }
-            100% { transform: translateX(55%); opacity: 0; }
+          @keyframes birdFlight {
+            0%   { transform: translate(-30px, 10px) scale(0.7); opacity: 0; }
+            10%  { opacity: 1; }
+            50%  { transform: translate(70px, -8px) scale(1); opacity: 1; }
+            90%  { opacity: 1; }
+            100% { transform: translate(170px, 4px) scale(0.7); opacity: 0; }
+          }
+          @keyframes birdFlap {
+            0%, 100% { transform: scaleY(1); }
+            50%      { transform: scaleY(0.55); }
+          }
+          @keyframes groundGlow {
+            0%, 100% { opacity: 0.4; }
+            50%      { opacity: 0.7; }
           }
         `
       }} />
@@ -64,13 +71,36 @@ const ListenerHomePage = () => {
         {/* Logo Section */}
         <div className="text-center mb-8">
           <div className="relative mx-auto mb-6 h-32 w-40 overflow-hidden" aria-hidden="true">
-            <div className="absolute left-1/2 top-1/2 h-16 w-16 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary/30" style={{ animation: 'listenerPulse 4s ease-in-out infinite' }} />
-            <div className="absolute left-5 top-4 h-4 w-4 rounded-full bg-secondary" style={{ animation: 'listenerFloat 6s ease-in-out infinite' }} />
-            <div className="absolute right-7 top-8 h-3 w-3 rounded-full bg-accent" style={{ animation: 'listenerFloat 5s ease-in-out infinite 0.8s' }} />
-            <div className="absolute bottom-5 left-8 h-3.5 w-3.5 rounded-full bg-muted-foreground/25" style={{ animation: 'listenerFloat 7s ease-in-out infinite 1.4s' }} />
-            <div className="absolute bottom-9 right-5 h-5 w-5 rounded-full bg-primary/20" style={{ animation: 'listenerFloat 5.5s ease-in-out infinite 2s' }} />
-            <div className="absolute bottom-1 left-0 h-px w-full bg-primary/30" style={{ animation: 'listenerWave 7s linear infinite' }} />
-            <div className="absolute bottom-4 left-0 h-px w-full bg-secondary" style={{ animation: 'listenerWave 9s linear infinite 1.5s' }} />
+            {/* Bird flying across */}
+            <svg
+              viewBox="0 0 24 12"
+              className="absolute top-3 left-0 h-3 w-6 text-primary"
+              style={{ animation: 'birdFlight 9s ease-in-out infinite' }}
+            >
+              <g style={{ animation: 'birdFlap 0.55s ease-in-out infinite', transformOrigin: '50% 50%' }}>
+                <path
+                  d="M2 8 Q6 2 12 6 Q18 2 22 8"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.4"
+                  strokeLinecap="round"
+                />
+              </g>
+            </svg>
+
+            {/* Tree */}
+            <svg viewBox="0 0 100 80" className="absolute inset-0 h-full w-full">
+              <path d="M48 78 L52 78 L51 52 L49 52 Z" className="fill-muted-foreground/60" />
+              <g style={{ animation: 'treeSway 6s ease-in-out infinite', transformOrigin: '50px 78px' }}>
+                <circle cx="50" cy="40" r="18" className="fill-primary/30" style={{ animation: 'leafBreath 5s ease-in-out infinite' }} />
+                <circle cx="38" cy="50" r="13" className="fill-primary/25" style={{ animation: 'leafBreath 6s ease-in-out infinite 0.8s' }} />
+                <circle cx="62" cy="50" r="13" className="fill-primary/25" style={{ animation: 'leafBreath 6.5s ease-in-out infinite 1.4s' }} />
+                <circle cx="50" cy="30" r="11" className="fill-secondary/50" style={{ animation: 'leafBreath 5.5s ease-in-out infinite 0.4s' }} />
+                <circle cx="44" cy="36" r="6" className="fill-accent/40" style={{ animation: 'leafBreath 4.5s ease-in-out infinite 1.8s' }} />
+                <circle cx="58" cy="36" r="5" className="fill-accent/40" style={{ animation: 'leafBreath 5s ease-in-out infinite 2.2s' }} />
+              </g>
+              <line x1="20" y1="79" x2="80" y2="79" className="stroke-primary/40" strokeWidth="0.6" strokeLinecap="round" style={{ animation: 'groundGlow 5s ease-in-out infinite' }} />
+            </svg>
           </div>
           <h2 className="text-5xl font-bold text-primary mb-4">Plaro</h2>
           <p className="text-xl text-muted-foreground">Your safe space to be heard.</p>
